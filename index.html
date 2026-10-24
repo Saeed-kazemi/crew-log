@@ -99,6 +99,11 @@ body.authed-out .app{padding-bottom:40px}
 .scan-row{display:flex;gap:8px;margin-top:6px}
 .scan-row input{flex:1;min-width:0;background:#222;color:#fff;border-bottom-color:#555}
 .scan-row .btn{flex:0 0 auto}
+
+/* chip rows that scroll sideways: fade the right edge so it is clear there is more */
+@media (max-width:899px){
+  .sheet .chips,.pvchips{-webkit-mask-image:linear-gradient(to right,#000 82%,transparent);mask-image:linear-gradient(to right,#000 82%,transparent);padding-right:36px}
+}
 </style>
 </head>
 <body>
@@ -1259,6 +1264,7 @@ function paintNav(){
 function render(){
   if(!USER){renderAuth();return;}
   if(ui.boot){showAuth('load');return;}
+  document.body.classList.remove('authed-out');
   const y=window.scrollY;
   if(ui.setup){$('#main').innerHTML='<div class="single">'+viewSetup()+'</div>';const nav=document.querySelector('.nav');if(nav)nav.hidden=true;return;}
   {const nav=document.querySelector('.nav');if(nav)nav.hidden=false;}
