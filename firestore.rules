@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Only the signed-in owner, with a verified email address, can touch their own data.
+    function isOwner(uid) {
+      return request.auth != null
+        && request.auth.uid == uid
+        && request.auth.token.email_verified == true;
+    }
+
+    // Plan, measurements, one document per logged day, and weekly backups.
+    match /users/{uid}/docs/{docId} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && docId.matches('^(plan|meas|d_[0-9]{4}-[0-9]{2}-[0-9]{2}|bk_[0-9]{4}-[0-9]{2}-[0-9]{2})$')
+        && request.resource.data.size() < 100;
+    }
+
+    // Small preview images of progress photos.
+    match /users/{uid}/thumbs/{photoId} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(['date', 'pose', 'th', 't'])
+        && request.resource.data.th is string
+        && request.resource.data.th.size() < 150000
+        && request.resource.data.pose in ['front', 'side', 'back'];
+    }
+
+    // Full-size progress photos.
+    match /users/{uid}/photos/{photoId} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(['img', 't'])
+        && request.resource.data.img is string
+        && request.resource.data.img.size() < 1000000;
+    }
+
+    // Everything else is closed.
+  }
+}
