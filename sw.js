@@ -1,5 +1,5 @@
 // Offline support. Bump VERSION whenever any file changes so phones pick up the new version.
-const VERSION = 'tc-2026-10-25-6';
+const VERSION = 'tc-2026-10-25-7';
 const CORE = [
   './', 'index.html', 'firebase-config.js', 'vendor.js', 'zxing_reader.wasm', 'exdb.json',
   'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'

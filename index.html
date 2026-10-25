@@ -875,8 +875,6 @@ function loadLocal(){
       if(o.days)S.days=o.days;
       return;
     }
-    const old=localStorage.getItem('saeed_training_days');
-    if(old){const p=migrateOld(old);if(p)S.plan=p;}
   }catch(e){}
 }
 function saveLocal(){if(!UID)return;try{localStorage.setItem(lkey(),JSON.stringify({plan:S.plan,meas:S.meas,days:S.days}));}catch(e){}}
@@ -3504,9 +3502,9 @@ document.addEventListener('click',e=>{
     case 'del-wu':{const i=+D.n;if(!S.plan.warmup[i])break;const it=S.plan.warmup.splice(i,1)[0];touchPlan();ui.undo={k:'wu',i:i,it:it};render();toast('Removed step',{a:'undo2',label:'Undo'},5000);break;}
     case 'add-hab':S.plan.habits.push({id:'h'+uid8(),t:'New item'});touchPlan();render();break;
     case 'del-hab':{const i=+D.n;if(!S.plan.habits[i])break;const it=S.plan.habits.splice(i,1)[0];touchPlan();ui.undo={k:'hab',i:i,it:it};render();toast('Removed item',{a:'undo2',label:'Undo'},5000);break;}
-    case 'export-json':saveFile('coach-backup-'+dstr(new Date())+'.json',JSON.stringify({v:2,plan:S.plan,meas:S.meas,days:S.days},null,1)).then(ok=>{if(ok){S.plan.settings.lastExport=dstr(new Date());touchPlan();render();}});break;break;
-    case 'export-csv-m':saveFile('measurements-'+dstr(new Date())+'.csv',csvMeas());break;
-    case 'export-csv-s':saveFile('lifts-'+dstr(new Date())+'.csv',csvSets());break;
+    case 'export-json':saveFile('crewlog-backup-'+dstr(new Date())+'.json',JSON.stringify({v:2,plan:S.plan,meas:S.meas,days:S.days},null,1)).then(ok=>{if(ok){S.plan.settings.lastExport=dstr(new Date());touchPlan();render();}});break;break;
+    case 'export-csv-m':saveFile('crewlog-measurements-'+dstr(new Date())+'.csv',csvMeas());break;
+    case 'export-csv-s':saveFile('crewlog-lifts-'+dstr(new Date())+'.csv',csvSets());break;
     case 'reset-plan':if(twoTap('reset')){const b=defaultPlan();S.plan.days=b.days;S.plan.warmup=b.warmup;S.plan.ed=true;touchPlan();render();toast('Plan reset');}break;
   }
 });
