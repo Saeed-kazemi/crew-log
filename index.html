@@ -1294,7 +1294,8 @@ function renderSoon(){
   render();
 }
 document.addEventListener('focusout',()=>{if(pendingRender){pendingRender=false;setTimeout(render,400);}});
-function go(tab,keep){ui.tab=tab;ui.arm=null;render();if(!keep)window.scrollTo(0,0);}
+function saveNav(){try{localStorage.setItem('cl_nav',JSON.stringify({tab:ui.tab,pv:ui.pv,t:Date.now()}));}catch(e){}}
+function go(tab,keep){ui.tab=tab;ui.arm=null;saveNav();render();if(!keep)window.scrollTo(0,0);}
 
 /* ---------- Today ---------- */
 function setsFor(dd,ex){const st=dd&&dd.sets&&dd.sets[ex.id];return st&&st.length?st:null;}
@@ -3487,7 +3488,7 @@ document.addEventListener('click',e=>{
     case 'wg-open':wgOpen(D.n);break;
     case 'wg-bank':{const q=ui.wg&&S.plan.warmup[ui.wg.n]?S.plan.warmup[ui.wg.n].t:'';ui.wg=null;xbOpen(null);if(q){setTimeout(()=>{if(ui.xb){ui.xb.q='';}},0);}break;}
     case 'sv':ui.sv=D.v;render();break;
-    case 'pv':ui.pv=D.v;ui.mi=null;render();window.scrollTo(0,0);break;
+    case 'pv':ui.pv=D.v;ui.mi=null;saveNav();render();window.scrollTo(0,0);break;
     case 'nm':ui.nm=D.v;render();break;
     case 'minfo':ui.mi=(!D.k||ui.mi===D.k)?null:D.k;render();break;
     case 'lall':ui.lall=!ui.lall;render();break;
@@ -3786,6 +3787,7 @@ function startApp(user){
   freshState();
   LOCALHAD=false;
   try{const raw=localStorage.getItem(lkey());if(raw){const o=JSON.parse(raw);if(o.plan)S.plan=normPlan(o.plan);if(o.meas)S.meas=normMeas(o.meas);if(o.days)S.days=o.days;LOCALHAD=true;}}catch(e){}
+  try{const nv=JSON.parse(localStorage.getItem('cl_nav')||'null');const TABS_OK=['today','food','plan','progress','guides','more'];if(nv&&TABS_OK.indexOf(nv.tab)>=0&&Date.now()-(nv.t||0)<12*3600*1000){ui.tab=nv.tab;if(nv.pv)ui.pv=nv.pv;}}catch(e){}
   ui.boot=!LOCALHAD;
   if(ui.boot)showAuth('load');
   else{if(!S.plan.onb)ui.setup=true;render();}
@@ -3796,7 +3798,7 @@ function startApp(user){
 async function wipeLocal(){
   try{if(UNSUB)UNSUB();}catch(e){}
   try{if(PHUNSUB)PHUNSUB();}catch(e){}
-  try{if(UID)localStorage.removeItem(lkey());}catch(e){}
+  try{if(UID)localStorage.removeItem(lkey());localStorage.removeItem('cl_nav');}catch(e){}
   try{const F=FX();if(FS&&F.terminate){await F.terminate(FS);if(F.clearIndexedDbPersistence)await F.clearIndexedDbPersistence(FS);}}catch(e){}
 }
 async function doSignOut(force){
@@ -4037,7 +4039,7 @@ if(!fbInit()){renderAuth();}
 else{
   showAuth('load');
   window.FB.onAuthStateChanged(AUTH,user=>{
-    if(!user){USER=null;UID=null;showAuth(AU.mode==='load'?'in':AU.mode,AU.err,AU.info);return;}
+    if(!user){USER=null;UID=null;if(AU.mode==='load'||AU.mode==='verify'||!document.getElementById('au-form'))showAuth(AU.mode==='load'||AU.mode==='verify'?'in':AU.mode,AU.err,AU.info);return;}
     USER=user;
     if(!user.emailVerified){showAuth('verify');return;}
     if(UID!==user.uid)startApp(user);
