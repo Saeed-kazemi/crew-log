@@ -8,13 +8,13 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Training">
+<meta name="apple-mobile-web-app-title" content="Crew Log">
 <meta name="description" content="Log workouts, food and body measurements. Works offline.">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>Training Companion</title>
+<title>Crew Log</title>
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
 html{-webkit-text-size-adjust:100%}
@@ -3693,7 +3693,7 @@ function renderAuth(){
   const nav=document.querySelector('.nav');if(nav)nav.hidden=true;
   const nb=$('#nextbar');if(nb)nb.hidden=true;
   const m=$('#main'),A=AU;
-  const brand='<div class="au-brand"><img src="icon-192.png" alt="" width="56" height="56"><div><b>Training Companion</b><span>Workouts, food and progress</span></div></div>';
+  const brand='<div class="au-brand"><img src="icon-192.png" alt="" width="56" height="56"><div><b>Crew Log</b><span>Training, food and progress</span></div></div>';
   const note=(A.err?'<p class="au-msg bad" role="alert">'+esc(A.err)+'</p>':'')+(A.info?'<p class="au-msg good" role="status">'+esc(A.info)+'</p>':'');
   const em='<label for="au-email">Email<input id="au-email" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" required value="'+esc(A.email)+'"></label>';
   const pw=(id,lbl,ac)=>'<label for="'+id+'">'+lbl+'<span class="pwf"><input id="'+id+'" name="'+id+'" type="password" autocomplete="'+ac+'" required minlength="'+(ac==='new-password'?10:1)+'"><button type="button" class="pwt" data-a="au-show" data-f="'+id+'" aria-label="Show password">Show</button></span></label>';

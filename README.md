@@ -1,4 +1,4 @@
-# Training Companion
+# Crew Log
 
 A workout, food and progress tracker that installs on iPhone and Android and works offline.
 
