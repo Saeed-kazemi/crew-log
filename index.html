@@ -110,6 +110,15 @@ body.authed-out .app{padding-bottom:40px}
 .pwr li::before{content:"";width:16px;height:16px;border-radius:50%;border:2px solid var(--line);flex:none;box-sizing:border-box}
 .pwr li.ok{color:var(--good)}
 .pwr li.ok::before{background:var(--good);border-color:var(--good);content:"\2713";color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1}
+
+/* filter dropdowns in the exercise sheets: everything visible, no sideways scrolling */
+.fbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px}
+.fbar label:first-child{grid-column:1/-1}
+.fbar.one{grid-template-columns:1fr}
+.fbar label{font-size:.72rem;min-width:0}
+.fbar select{margin-top:3px;padding:10px 26px 10px 10px;text-overflow:ellipsis;white-space:nowrap;overflow:hidden;min-height:46px}
+.fbar select.on{background-color:var(--accent-soft);border-bottom-color:var(--accent);color:var(--accent);font-weight:600}
+@media (min-width:600px){.fbar{grid-template-columns:repeat(3,minmax(0,1fr))}.fbar label:first-child{grid-column:auto}}
 </style>
 </head>
 <body>
@@ -1643,13 +1652,10 @@ function xbListHTML(){
 }
 function xbChipsHTML(){
   const X=ui.xb,mus=['All'].concat(Object.keys(XMU).sort((a,b)=>XMU[a]<XMU[b]?-1:1));
-  let h='<div class="chips" id="xb-mu">'+mus.map(m=>'<button data-a="xb-mu" data-v="'+esc(m)+'" aria-pressed="'+(X.mu===m)+'">'+esc(m==='All'?'All muscles':XMU[m])+'</button>').join('')+'</div>';
-  h+='<div class="chips"><button data-a="xb-fo" aria-pressed="'+X.fo+'">'+(X.fo?'Hide filters':'More filters')+(X.eq!=='All'||X.ty!=='All'?' (on)':'')+'</button></div>';
-  if(X.fo){
-    const eqs=['All'].concat(Array.from(new Set(EXDB.map(e=>e.e))).sort());
-    h+='<div class="eyebrow">Equipment</div><div class="chips">'+eqs.map(m=>'<button data-a="xb-eq" data-v="'+esc(m)+'" aria-pressed="'+(X.eq===m)+'">'+esc(m==='All'?'Any':xeq(m))+'</button>').join('')+'</div>';
-    h+='<div class="eyebrow">Type</div><div class="chips">'+XTYPE.map(m=>'<button data-a="xb-ty" data-v="'+esc(m[0])+'" aria-pressed="'+(X.ty===m[0])+'">'+esc(m[1])+'</button>').join('')+'</div>';
-  }
+  const eqs=['All'].concat(Array.from(new Set(EXDB.map(e=>e.e))).sort());
+  const sel=(id,lbl,cur,opts)=>'<label for="'+id+'">'+lbl+'<select id="'+id+'" data-c="'+id+'"'+(cur!=='All'?' class="on"':'')+'>'+opts.map(o=>'<option value="'+esc(o[0])+'"'+(o[0]===cur?' selected':'')+'>'+esc(o[1])+'</option>').join('')+'</select></label>';
+  let h='<div class="fbar">'+sel('xb-mu-s','Muscle',X.mu,mus.map(m=>[m,m==='All'?'All':XMU[m]]))+sel('xb-eq-s','Equipment',X.eq,eqs.map(m=>[m,m==='All'?'Any':xeq(m)]))+sel('xb-ty-s','Type',X.ty,XTYPE.map(m=>[m[0],m[0]==='All'?'All':m[1]]))+'</div>';
+  if(X.mu!=='All'||X.eq!=='All'||X.ty!=='All')h+='<button class="link" data-a="xb-clear" style="margin-top:2px">Clear filters</button>';
   return h;
 }
 function xbAnimHTML(e){
@@ -2969,7 +2975,7 @@ function refreshLib(){
 function paintLib(){
   const m=$('#modal'),L=ui.lib,day=findDay(L.d);
   if(!day){ui.lib=null;m.hidden=true;m.innerHTML='';return;}
-  m.innerHTML='<div class="mback" data-a="pm-close"></div><div class="sheet lib" role="dialog" aria-modal="true" aria-label="Exercise library"><div class="shh"><h2>'+(L.swap?'Swap exercise':'Add exercises')+'</h2><button class="link" data-a="pm-close">Close</button></div><p class="sub" style="margin:-4px 0 8px">'+esc(day.name)+'</p><input id="lib-q" type="search" data-i="lib-q" placeholder="Search by name or muscle" value="'+esc(L.q)+'" aria-label="Search exercises"><div class="chips" style="margin-top:8px">'+MUSCLES.map(x=>'<button data-a="lib-mu" data-m="'+x+'" aria-pressed="'+(L.mu===x)+'">'+x+'</button>').join('')+'</div><div id="lib-list" class="llist">'+libListHTML()+'</div><div class="lfoot" id="lib-foot">'+libFootHTML()+'</div></div>';
+  m.innerHTML='<div class="mback" data-a="pm-close"></div><div class="sheet lib" role="dialog" aria-modal="true" aria-label="Exercise library"><div class="shh"><h2>'+(L.swap?'Swap exercise':'Add exercises')+'</h2><button class="link" data-a="pm-close">Close</button></div><p class="sub" style="margin:-4px 0 8px">'+esc(day.name)+'</p><input id="lib-q" type="search" data-i="lib-q" placeholder="Search by name or muscle" value="'+esc(L.q)+'" aria-label="Search exercises"><div class="fbar one"><label for="lib-mu-s">Muscle<select id="lib-mu-s" data-c="lib-mu-s"'+(L.mu!=='All'?' class="on"':'')+'>'+MUSCLES.map(x=>'<option value="'+esc(x)+'"'+(L.mu===x?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select></label></div><div id="lib-list" class="llist">'+libListHTML()+'</div><div class="lfoot" id="lib-foot">'+libFootHTML()+'</div></div>';
   m.hidden=false;
 }
 
@@ -3298,6 +3304,7 @@ document.addEventListener('click',e=>{
     case 'xb-eq':{ui.xb.eq=D.v;ui.xb.n=40;refreshXb('lc');break;}
     case 'xb-ty':{ui.xb.ty=D.v;ui.xb.n=40;refreshXb('lc');break;}
     case 'xb-fo':{ui.xb.fo=!ui.xb.fo;refreshXb('c');break;}
+    case 'xb-clear':{ui.xb.mu='All';ui.xb.eq='All';ui.xb.ty='All';ui.xb.n=40;refreshXb('lc');break;}
     case 'xb-more':{ui.xb.n+=40;refreshXb('l');break;}
     case 'xb-sel':{const X=ui.xb,l=$('#xb-list');X.scroll=l?l.scrollTop:0;X.mode='detail';X.id=D.id;X.from='list';paintXb();break;}
     case 'xb-back':{const X=ui.xb;X.mode='list';X.want=null;paintXb();break;}
@@ -3574,6 +3581,10 @@ document.addEventListener('change',e=>{
     case 'exlg':{const d=findDay(D.d),ex=d&&d.ex.find(x=>x.id===D.ex);if(ex){ex.lg=t.value;touchPlan();render();}break;}
     case 'dwd':{const d=findDay(D.d);d.wd=+t.value;touchPlan();render();break;}
     case 'lift':ui.lift=t.value;render();break;
+    case 'xb-mu-s':if(ui.xb){ui.xb.mu=t.value;ui.xb.n=40;refreshXb('lc');const l=$('#xb-list');if(l)l.scrollTop=0;}break;
+    case 'xb-eq-s':if(ui.xb){ui.xb.eq=t.value;ui.xb.n=40;refreshXb('lc');}break;
+    case 'xb-ty-s':if(ui.xb){ui.xb.ty=t.value;ui.xb.n=40;refreshXb('lc');}break;
+    case 'lib-mu-s':if(ui.lib){ui.lib.mu=t.value;refreshLib();t.classList.toggle('on',t.value!=='All');}break;
     case 'ph-l':ui.cl=t.value;render();break;
     case 'ph-r':ui.cr=t.value;render();break;
     case 'rpe':S.plan.settings.rpe=t.value==='on';touchPlan();render();break;
