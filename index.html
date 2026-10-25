@@ -123,6 +123,48 @@ body.authed-out .app{padding-bottom:40px}
 .au-splash{display:flex;align-items:center;justify-content:center;gap:12px;padding:18px 0;color:var(--sub);font-weight:600}
 .spin{width:22px;height:22px;border-radius:50%;border:3px solid var(--accent-soft);border-top-color:var(--accent);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* ready-made programmes */
+.pgc h2{margin:2px 0 6px}
+.pgb{display:grid;gap:8px;background:var(--accent-soft);box-shadow:none;margin-bottom:12px}
+.pgb b{display:block;font:700 1.05rem var(--font-display);letter-spacing:.01em}
+.pgb span{font-size:.88rem;line-height:1.4;color:var(--text)}
+.pgb.easy{background:var(--good-soft)}
+.pgb.done{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--good-soft)}
+.pgbar{display:block;width:100%;height:6px;border:0;padding:0;border-radius:3px;background:var(--surface);overflow:hidden;pointer-events:none}
+.pgbar i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.pgrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:10px;cursor:pointer;color:var(--text)}
+.pgrow .lt{flex:1;min-width:0}
+.pgrow b{font:700 1.1rem var(--font-display)}
+.pgrow small{display:block;color:var(--sub);font-size:.8rem;margin:2px 0 6px}
+.pgs{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:.86rem;color:var(--sub);line-height:1.4}
+.pgrow .chev{flex:0 0 32px;width:32px;height:32px;font-size:1.4rem}
+.pgtips{margin:0;padding-left:20px;display:grid;gap:6px;font-size:.9rem}
+.pgweeks{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px}
+.pgw{display:flex;align-items:center;gap:8px;background:var(--sec);border-radius:10px;padding:7px 9px;font-size:.8rem}
+.pgw b{flex:0 0 24px;height:24px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:.78rem}
+.pgw.easy{background:var(--good-soft)}.pgw.easy b{background:var(--good)}
+.pgday{background:var(--sec);border-radius:14px;padding:10px 12px;margin-top:8px}
+.pgdh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:4px}
+.pgdh b{font:700 1rem var(--font-display)}.pgdh span{font-size:.78rem;color:var(--sub)}
+.pgex{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:.9rem}
+.pgex:first-of-type{border-top:0}
+.pgex small{display:block;color:var(--sub);font-size:.76rem}
+.pgsr{font:600 .85rem var(--font-num);white-space:nowrap}
+.pgex .link{min-height:36px;padding:6px 10px}
+.fbar.four{grid-template-columns:repeat(2,minmax(0,1fr))}
+.fbar.four label:first-child{grid-column:auto}
+@media (min-width:600px){.fbar.four{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.pgtop{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px}
+.pglv{margin:16px 2px 0;font:700 .75rem var(--font-body);letter-spacing:.09em;text-transform:uppercase;color:var(--sub)}
+.pgrow.top{border:2px solid var(--good)}
+.pgrow.mine{cursor:default;gap:8px}
+.pgrow.mine .btn{flex:0 0 auto}
+.q{margin-bottom:16px}
+.q>b{display:block;font:700 1rem var(--font-display);margin-bottom:6px}
+.qrow{display:flex;flex-wrap:wrap;gap:8px}
+.qopt{border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:12px;padding:10px 14px;font-weight:600;font-size:.9rem;min-height:44px;cursor:pointer}
+.qopt[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
 </style>
 </head>
 <body>
@@ -721,6 +763,7 @@ svg.chart text.dash{fill:var(--sub);font-size:12px}
 
 <script src="firebase-config.js"></script>
 <script src="vendor.js"></script>
+<script src="programs.js"></script>
 <script>
 (function(){
 'use strict';
@@ -833,6 +876,8 @@ function normPlan(p){
   o.foods=Array.isArray(o.foods)?o.foods:[];o.favs=Array.isArray(o.favs)?o.favs:[];o.meals=Array.isArray(o.meals)?o.meals:[];
   o.settings=Object.assign({},b.settings,o.settings);
   o.pain=Array.isArray(o.pain)?o.pain:[];
+  o.exn=o.exn&&typeof o.exn==='object'?o.exn:{};
+  [].concat(o.days||[],Array.isArray(o.myDays)?o.myDays:[]).forEach(d=>(d.ex||[]).forEach(e=>{if(e&&e.id&&e.n)o.exn[e.id]=e.n;}));
   const OLDN=[['Re-entry: first 2 weeks at about 80-85% of your old weights. ',''],['Squat was about 60 kg total before the break. Start near 48-50 kg total and build back up.',''],['Deadlift was 40-50 kg total before the break. ','']];
   o.days.forEach(d=>{d.ex=Array.isArray(d.ex)?d.ex:[];if(typeof d.wd!=='number')d.wd=-1;if(typeof d.note==='string')OLDN.forEach(x=>{d.note=d.note.replace(x[0],x[1]).trim();});});
   return o;
@@ -1282,6 +1327,7 @@ function render(){
   if(!USER){renderAuth();return;}
   if(ui.boot){showAuth('load');return;}
   document.body.classList.remove('authed-out');
+  if(S.plan.prog)progApply();
   const y=window.scrollY;
   if(ui.setup){$('#main').innerHTML='<div class="single">'+viewSetup()+'</div>';const nav=document.querySelector('.nav');if(nav)nav.hidden=true;return;}
   {const nav=document.querySelector('.nav');if(nav)nav.hidden=false;}
@@ -1316,6 +1362,7 @@ function viewToday(){
   const dayId=activeDayId(date);
   const day=P.days.find(d=>d.id===dayId)||null;
   let h=top(isToday?'Today':'Logging',day?day.name:'Rest day');
+  h+=progBanner();
   h+='<div class="datebar"><button class="btn ghost sm" data-a="date" data-n="-1" aria-label="Previous day">&#8249;</button><div class="dt">'+fmtLong(date)+(isToday?'':'<button class="back" data-a="date" data-n="0">Back to today</button>')+'</div><button class="btn ghost sm" data-a="date" data-n="1" aria-label="Next day">&#8250;</button></div>';
   if(isToday&&parseD(date).getDay()===0){
     const last=lastEntryDate();
@@ -1374,6 +1421,7 @@ function lastSetVals(exId,i,date){
   const x=l.sets[Math.min(i,l.sets.length-1)];return {w:x.w,r:x.r};
 }
 function suggest(ex,date){
+  if(ex.pct&&ex.pct.length)return waveSuggest(ex,date);
   const l=lastFor(ex.id,date);if(!l)return null;
   const m=metaOf(ex);if(m.cardio)return null;
   const sets=l.sets,top=topRange(ex.r),lo=lowRange(ex.r);
@@ -1395,6 +1443,10 @@ function suggest(ex,date){
   else if(hit)note='Top of the range on every set last time. Today: '+(m.bw&&!maxW?'add '+fmt(inc)+' kg':fmt(maxW+inc)+' kg')+' and aim for '+(lo||'')+'+ reps.';
   else if(m.bw&&!maxW)note='Bodyweight. Aim for one more rep on each set.';
   else note='Same weight as last time ('+fmt(maxW)+' kg). Aim for one more rep on each set.';
+  if(!hit&&!m.timed&&!(m.bw&&!maxW)){
+    const stl=stallCheck(ex,date);
+    if(stl){note='Same weight for 3 sessions without progress. Reset to '+fmt(stl.drop)+' kg (about 10% lighter) and build back up, or tap Swap for a similar exercise.';for(let i=0;i<ws.length;i++)ws[i]=stl.drop;}
+  }
   return {ws:ws,rs:rs,note:note};
 }
 function placeholderFor(exId,i,date){
@@ -1421,7 +1473,7 @@ function exCard(ex,day,date,dd){
   if(last){
     h+='<div class="last">Last ('+fmtD(last.date)+'): '+last.sets.map(x=>setLong(ex,x)).join(', ')+'</div>';
     if(sug)h+='<div class="hint">'+esc(sug.note)+'</div>';
-  }
+  }else if(sug&&ex.pct)h+='<div class="hint">'+esc(sug.note)+'</div>';
   if(ui.cue===ex.id&&ex.cue)h+='<div class="cue">'+esc(ex.cue)+'</div>';
   h+='<div class="sets'+(rpeOn?' rpe':'')+'"><div class="setH"><span>Set</span><span class="ph">Last</span><span>'+kgL+'</span><span>'+repL+'</span>'+(rpeOn?'<span>RPE</span>':'')+'<span></span></div>';
   let heaviest='';
@@ -1513,6 +1565,7 @@ function paintNext(){
   document.documentElement.style.setProperty('--nbh',h?(b.offsetHeight||0)+'px':'0px');
 }
 function ensureSets(dd,ex){
+  dd.names=dd.names||{};if(dd.names[ex.id]!==ex.n)dd.names[ex.id]=ex.n;
   let st=dd.sets[ex.id];
   if(!st||!st.length){st=dd.sets[ex.id]=[];for(let i=0;i<ex.s;i++)st.push({w:'',r:'',d:false});}
   return st;
@@ -1527,6 +1580,7 @@ function sessionDoc(){
 function viewPlan(){
   const P=S.plan;
   let h=top('Edit anything','Plan');
+  h+=progPlanCard();
   h+='<div class="week">'+[1,2,3,4,5,6,0].map(wd=>{const d=P.days.find(x=>x.wd===wd);return '<div class="wk'+(d?' on':'')+'"><span>'+WD[wd]+'</span><b>'+(d?esc(d.name.split(/[ ,+]/)[0]):'Rest')+'</b></div>';}).join('')+'</div>';
   P.days.forEach(d=>{
     const open=ui.openDay===d.id;
@@ -2129,7 +2183,8 @@ const GRP={Push:['Chest','Front delts','Side delts','Triceps'],Pull:['Lats','Upp
 const MKEYS=Object.keys(MC).map(k=>MC[k]);
 function exMap(){
   const m={};
-  S.plan.days.forEach(d=>d.ex.forEach(e=>{m[e.id]=e;}));
+  Object.keys(S.plan.exn||{}).forEach(id=>{m[id]={id:id,n:S.plan.exn[id]};});
+  [].concat(Array.isArray(S.plan.myDays)?S.plan.myDays:[],S.plan.days).forEach(d=>d.ex.forEach(e=>{m[e.id]=e;}));
   return m;
 }
 function setsStats(from,to){
@@ -2441,10 +2496,18 @@ function viewProgress(){
   h+='<div class="chips pvchips" role="tablist">'+PV.map(x=>'<button role="tab" data-a="pv" data-v="'+x[0]+'" aria-pressed="'+((ui.pv||'ov')===x[0])+'">'+x[1]+'</button>').join('')+'</div>';
   return h+({ov:pvOverview,bd:pvBody,ph:pvPhotos,st:pvStrength,fd:pvFood,nt:pvNotes}[ui.pv||'ov']||pvOverview)();
 }
+function exName(id,dd){return (dd&&dd.names&&dd.names[id])||(S.plan.exn&&S.plan.exn[id])||'';}
+function setsNamed(dd,id){
+  const own=findEx(id),nm=String((own&&own.n)||exName(id,dd)).toLowerCase();
+  if(!dd||!dd.sets)return [];
+  if(!nm)return dd.sets[id]||[];
+  let out=[];Object.keys(dd.sets).forEach(k=>{if(k===id||String(exName(k,dd)).toLowerCase()===nm)out=out.concat(dd.sets[k]);});
+  return out;
+}
 function sessE1(id){
   const out=[];
   sortedDates().forEach(k=>{
-    const st=(S.days[k].sets&&S.days[k].sets[id]||[]).filter(x=>x.d&&+x.w>0&&(x.t==='n'||!x.t||x.t==='d'));
+    const st=setsNamed(S.days[k],id).filter(x=>x.d&&+x.w>0&&(x.t==='n'||!x.t||x.t==='d'));
     if(!st.length)return;
     const top=st.reduce((a,x)=>(+x.w>+a.w?x:a),st[0]);
     out.push({d:k,e:Math.max.apply(null,st.map(x=>+x.w*(1+(+x.r||0)/30))),w:+top.w,r:+top.r||0});
@@ -2453,7 +2516,7 @@ function sessE1(id){
 }
 function progLifts(){
   const lifts=[],seen={};
-  S.plan.days.forEach(d=>d.ex.forEach(e=>{const k=String(e.n).toLowerCase();if(seen[k])return;if(sortedDates().some(q=>(S.days[q].sets&&S.days[q].sets[e.id]||[]).some(x=>x.d&&+x.w>0))){seen[k]=1;lifts.push(e);}}));
+  S.plan.days.forEach(d=>d.ex.forEach(e=>{const k=String(e.n).toLowerCase();if(seen[k])return;if(sortedDates().some(q=>setsNamed(S.days[q],e.id).some(x=>x.d&&+x.w>0))){seen[k]=1;lifts.push(e);}}));
   return lifts;
 }
 function spark(vals){
@@ -3071,6 +3134,7 @@ function pmOut(){
 }
 function paintModal(){
   const m=$('#modal');
+  if(ui.pg&&!ui.xb){paintPg();return;}
   if(ui.ph){paintPh();return;}
   if(ui.wg){paintWg();return;}
   if(ui.xb){paintXb();return;}
@@ -3086,7 +3150,7 @@ function paintModal(){
    +'<div class="eyebrow" style="margin-top:10px">Plates your gym has (tap to switch off)</div><div class="pchips">'+STD_PLATES.map(p=>'<button data-a="pm-plate" data-p="'+p+'" aria-pressed="'+(have.indexOf(p)>=0)+'">'+p+'</button>').join('')+'</div></div>';
   m.hidden=false;
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&(ui.ph||ui.pm||ui.lib||ui.alt||ui.fd||ui.xb||ui.wg)){ui.ph=null;ui.pm=null;ui.lib=null;ui.alt=null;ui.fd=null;ui.xb=null;ui.wg=null;paintModal();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&(ui.pg||ui.ph||ui.pm||ui.lib||ui.alt||ui.fd||ui.xb||ui.wg)){ui.pg=null;ui.ph=null;ui.pm=null;ui.lib=null;ui.alt=null;ui.fd=null;ui.xb=null;ui.wg=null;paintModal();}});
 
 /* ---------- swipe to delete ---------- */
 let swp=null;
@@ -3132,7 +3196,8 @@ document.addEventListener('click',e=>{
   const D=t.dataset;
   if(a.indexOf('au-')===0&&a!=='au-out-ask'){auAction(a,D);return;}
   if(a==='scan-close'){scanClose();return;}
-  if(a==='sw-update'){if(ui.swWait)ui.swWait.postMessage('skip');return;}
+  if(a.indexOf('pg-')===0&&pgAction(a,D))return;
+  if(a==='sw-update'){if(ui.swWait){ui.swAsked=true;ui.swWait.postMessage('skip');}return;}
   if(a==='su-plan'){ui.suPlan=D.v;document.querySelectorAll('.su-plan').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.v===D.v)));return;}
   if(a==='au-out-ask'){doSignOut(false);return;}
   if(a==='install'){if(INSTALL){INSTALL.prompt();INSTALL.userChoice.finally(()=>{INSTALL=null;render();});}return;}
@@ -3202,7 +3267,7 @@ document.addEventListener('click',e=>{
       if(!ui.ph.arm){ui.ph.arm=true;paintPh();const id=ui.ph.id;setTimeout(()=>{if(ui.ph&&ui.ph.id===id&&ui.ph.arm){ui.ph.arm=false;paintPh();}},3500);break;}
       deletePhoto(ui.ph.id);ui.ph=null;paintModal();render();toast('Photo deleted',null,2500);break;
     }
-    case 'pm-close':ui.ph=null;ui.pm=null;ui.lib=null;ui.alt=null;ui.fd=null;ui.xb=null;ui.wg=null;paintModal();render();break;
+    case 'pm-close':if(ui.xb&&ui.pg){ui.xb=null;paintModal();break;}ui.pg=null;ui.ph=null;ui.pm=null;ui.lib=null;ui.alt=null;ui.fd=null;ui.xb=null;ui.wg=null;paintModal();render();break;
     case 'alt-open':{
       const day=S.plan.days.find(d=>d.id===activeDayId(ui.date));
       if(day)ui.alt={d:day.id,ex:D.ex,q:'',eq:'Any',sel:null};
@@ -3584,6 +3649,10 @@ document.addEventListener('change',e=>{
     case 'exlg':{const d=findDay(D.d),ex=d&&d.ex.find(x=>x.id===D.ex);if(ex){ex.lg=t.value;touchPlan();render();}break;}
     case 'dwd':{const d=findDay(D.d);d.wd=+t.value;touchPlan();render();break;}
     case 'lift':ui.lift=t.value;render();break;
+    case 'pg-goal':if(ui.pg){ui.pg.goal=t.value;paintModal();}break;
+    case 'pg-days':if(ui.pg){ui.pg.days=t.value;paintModal();}break;
+    case 'pg-eq':if(ui.pg){ui.pg.eq=t.value;paintModal();}break;
+    case 'pg-lvl':if(ui.pg){ui.pg.lvl=t.value;paintModal();}break;
     case 'xb-mu-s':if(ui.xb){ui.xb.mu=t.value;ui.xb.n=40;refreshXb('lc');const l=$('#xb-list');if(l)l.scrollTop=0;}break;
     case 'xb-eq-s':if(ui.xb){ui.xb.eq=t.value;ui.xb.n=40;refreshXb('lc');}break;
     case 'xb-ty-s':if(ui.xb){ui.xb.ty=t.value;ui.xb.n=40;refreshXb('lc');}break;
@@ -3609,6 +3678,314 @@ document.addEventListener('change',e=>{
 function applyTheme(){
   const r=document.documentElement;
   if(ui.theme==='light'||ui.theme==='dark'||ui.theme==='black')r.setAttribute('data-theme',ui.theme);else r.removeAttribute('data-theme');
+}
+
+/* ================= programmes: library, personal fit, own programmes, coaching ================= */
+const PGOAL=[['All','Any goal'],['beginner','New to training'],['muscle','Build muscle'],['strength','Get stronger'],['fatloss','Lose fat'],['home','Train at home'],['arms','Focus: arms'],['biceps','Focus: biceps'],['chest','Focus: chest'],['shoulders','Focus: shoulders'],['back','Focus: back'],['legs','Focus: legs'],['glutes','Focus: glutes'],['abs','Focus: abs and core']];
+const PFOCUS={arms:'Arms',biceps:'Biceps',chest:'Chest',shoulders:'Shoulders',back:'Back',legs:'Legs',glutes:'Glutes',abs:'Abs and core'};
+const PEQ={gym:'Gym',dumbbells:'Dumbbells',none:'No equipment'};
+const PLEVELS=['Starter','Intermediate','Advanced'];
+function progs(){return (window.CL_PROGRAMS||[]).concat((S.plan.myProgs||[]));}
+function progById(id){return progs().find(p=>p.id===id)||null;}
+function progWeekOf(pr,date){
+  const P=S.plan.prog;if(!P||!pr)return 0;
+  return Math.max(1,Math.floor(daysBetween(P.start,weekStart(date||dstr(new Date())))/7)+1);
+}
+function phaseFor(pr,w){
+  if(!pr.phases||!pr.phases.length)return {ph:null,deload:(pr.deload||[]).indexOf(w)>=0};
+  const ph=pr.phases.find(x=>w>=x.w[0]&&w<=x.w[1]);
+  if(ph)return {ph:ph,deload:false};
+  if(pr.deload.indexOf(w)>=0){let prev=null;pr.phases.forEach(x=>{if(x.w[1]<w)prev=x;});return {ph:prev||pr.phases[0],deload:true};}
+  return {ph:pr.phases[pr.phases.length-1],deload:false};
+}
+function scheme(s){return s?s[0]+' × '+s[1]:'';}
+function waveWeek(pr,w){return ((Math.min(w,pr.weeks)-1)%4)+1;}
+/* sets/reps (and wave percentages) for one programme row in a given week, with personal adjustments */
+function exForWeek(row,pr,w,adj){
+  const f=phaseFor(pr,Math.min(w,pr.weeks));
+  if(row[6]&&window.CL_WAVE){
+    const wv=window.CL_WAVE[waveWeek(pr,w)];
+    return {s:wv.length,r:wv.map(x=>x[1]).join(', '),pct:wv.map(x=>x[0]),prs:wv.map(x=>x[1])};
+  }
+  let s=row[1],r=row[2];
+  if(f.ph){
+    const sc=row[4]?f.ph.main:f.ph.acc,plainRange=/^\d+(-\d+)?$/.test(String(row[2]));
+    if(sc&&row[1]>1){s=sc[0];if(plainRange)r=sc[1];}
+  }
+  if(f.deload&&s>1)s=Math.max(1,Math.round(s/2));
+  if(adj&&adj.vol&&s>2&&!f.deload)s=Math.max(2,s+adj.vol);
+  return {s:s,r:r};
+}
+function swapName(n,adj){
+  if(!adj||!adj.avoid||!window.CL_SWAPS)return n;
+  for(const a of adj.avoid){const m=window.CL_SWAPS[a];if(m&&m[n])return m[n];}
+  return n;
+}
+function progRows(pr,adj){
+  const days=pr.plan.map(d=>({name:d.name,ex:d.ex.map(e=>{const nn=swapName(e[0],adj);const r=e.slice();if(nn!==e[0]){r[0]=nn;r[5]='Gentler swap for '+e[0]+'.';}return r;})}));
+  if(adj&&adj.focus&&pr.focus!==adj.focus&&window.CL_FOCUS_ADD&&window.CL_FOCUS_ADD[adj.focus]){
+    const add=window.CL_FOCUS_ADD[adj.focus];
+    [0,Math.min(2,days.length-1)].filter((v,i,a)=>a.indexOf(v)===i).forEach(i=>{add.forEach(e=>{if(!days[i].ex.some(x=>x[0]===e[0]))days[i].ex.push(e.slice());});});
+  }
+  return days;
+}
+function progBuildDays(pr,adj){
+  return progRows(pr,adj).map((d,i)=>({id:'p'+i+uid8(),name:d.name,wd:pr.sched[i]===undefined?-1:pr.sched[i],note:'',ex:d.ex.map((e,j)=>({id:'pe'+uid8(),n:e[0],s:e[1],r:e[2],rest:e[3],cue:e[5]||'',tag:'',pk:i+'-'+j}))}));
+}
+function progApply(force){
+  const P=S.plan.prog;if(!P)return false;
+  const pr=progById(P.id);if(!pr)return false;
+  if(pr.custom){progSyncCustom(pr);return false;}
+  const w=progWeekOf(pr);
+  if(!force&&P.aw===w)return false;
+  const rows=progRows(pr,P.adj);
+  S.plan.days.forEach(d=>d.ex.forEach(e=>{
+    if(!e.pk)return;const ij=e.pk.split('-').map(Number),row=rows[ij[0]]&&rows[ij[0]].ex[ij[1]];
+    if(!row||String(row[0]).toLowerCase()!==String(e.n).toLowerCase())return;
+    const x=exForWeek(row,pr,w,P.adj);e.s=x.s;e.r=x.r;
+    if(x.pct){e.pct=x.pct;e.prs=x.prs;}else{delete e.pct;delete e.prs;}
+  }));
+  P.aw=w;touchPlan();return true;
+}
+function progStart(id,adj){
+  const pr=progById(id);if(!pr)return;
+  const P=S.plan;
+  if(!P.prog)P.myDays=clone(P.days);
+  P.prog={id:pr.id,start:weekStart(dstr(new Date())),aw:0,adj:adj||null};
+  if(pr.custom){P.days=clone(pr.days||[]);}
+  else P.days=progBuildDays(pr,adj);
+  P.exn=P.exn||{};P.days.forEach(d=>d.ex.forEach(e=>{P.exn[e.id]=e.n;}));
+  if(!pr.custom)progApply(true);else touchPlan();
+  ui.pg=null;paintModal();ui.tab=pr.custom?'plan':'today';saveNav();render();window.scrollTo(0,0);
+  toast(pr.custom?pr.name+' started. Add your days and exercises below.':'Started '+pr.name+'. Week 1 is on Today.',null,4500);
+}
+function progEnd(){
+  const P=S.plan,pr=P.prog&&progById(P.prog.id);
+  if(pr&&pr.custom)progSyncCustom(pr);
+  P.days=Array.isArray(P.myDays)?P.myDays:[];P.prog=null;
+  touchPlan();render();toast((pr?pr.name+' ended. ':'')+'Your own plan is back.',null,3500);
+}
+/* own programmes keep a copy of their days so they can be restarted later */
+function progSyncCustom(pr){
+  const days=clone(S.plan.days);
+  if(JSON.stringify(days)!==JSON.stringify(pr.days)){pr.days=days;pr.perWeek=days.length;touchPlan();}
+}
+function progBanner(){
+  const P=S.plan.prog;if(!P)return '';
+  const pr=progById(P.id);if(!pr)return '';
+  const w=progWeekOf(pr);
+  if(w>pr.weeks)return '<div class="card pgb done"><div><b>'+esc(pr.name)+' complete</b><span>Nice work. Repeat it with heavier weights, or pick a new programme on the Plan tab.</span></div><button class="btn sm" data-a="pg-open">Programmes</button></div>';
+  const f=phaseFor(pr,w);
+  let line;
+  if(f.deload)line='Easier week: half the sets and about 10-20% lighter. Let your body recover.';
+  else if(pr.plan&&pr.plan.some(d=>d.ex.some(e=>e[6])))line='Wave week '+waveWeek(pr,w)+' of 4: main lifts use percentages of your training max (shown on each lift). Assistance '+scheme(f.ph&&f.ph.acc)+'.';
+  else if(f.ph)line=esc(f.ph.label)+': main lifts '+scheme(f.ph.main)+', others '+scheme(f.ph.acc)+(f.ph.note?'. '+esc(f.ph.note):'');
+  else line='Your own programme.';
+  return '<div class="card pgb'+(f.deload?' easy':'')+'"><div><b>'+esc(pr.name)+' &middot; Week '+w+' of '+pr.weeks+'</b><span>'+line+'</span></div><span class="pgbar" aria-hidden="true"><i style="width:'+Math.round(Math.min(w,pr.weeks)/pr.weeks*100)+'%"></i></span></div>';
+}
+function progPlanCard(){
+  const P=S.plan.prog,pr=P&&progById(P.id);
+  if(pr){
+    const w=progWeekOf(pr),a=P.adj;
+    const adjTxt=a?[a.vol<0?'fewer sets for a newer lifter':'',a.avoid&&a.avoid.length?'gentler swaps for '+a.avoid.join(' and '):'',a.focus&&pr.focus!==a.focus?'extra '+(PFOCUS[a.focus]||a.focus).toLowerCase()+' work':''].filter(Boolean).join(', '):'';
+    return '<div class="card pgc"><div class="eyebrow">'+(pr.custom?'Your programme':'Programme')+'</div><h2>'+esc(pr.name)+'</h2><p class="sub">'+(w>pr.weeks?'Finished':'Week '+w+' of '+pr.weeks)+' &middot; '+(pr.custom?'edit the days below and the programme saves itself.':'the days below come from this programme and update each week. Edit or swap anything.')+(adjTxt?' Adjusted for you: '+esc(adjTxt)+'.':'')+'</p>'
+      +'<div class="row" style="margin-top:10px">'+(pr.custom?'':'<button class="btn ghost" data-a="pg-view" data-id="'+esc(pr.id)+'">View</button>')+'<button class="btn ghost" data-a="pg-open">Change</button><button class="btn bad" data-a="pg-end">'+(ui.arm==='pgend'?'Tap again to end':'End programme')+'</button></div></div>';
+  }
+  return '<div class="card pgc"><div class="eyebrow">Programmes</div><h2>Not sure what to do?</h2><p class="sub">'+(window.CL_PROGRAMS||[]).length+' proven programmes from your first month to advanced, plus focus blocks for arms, chest, shoulders, back, legs, glutes and abs. Answer a few questions and the app picks the best ones for you.</p><div class="row" style="margin-top:10px"><button class="btn" data-a="pg-quiz">Find my programme</button><button class="btn ghost" data-a="pg-open">Browse all</button></div><button class="link" data-a="pg-new" style="margin-top:6px">+ Add your own programme</button></div>';
+}
+
+/* ---------- personal fit ---------- */
+function quizDefaults(){const q=S.plan.profile||{};return {goal:q.goal||'muscle',exp:q.exp||'some',days:q.days||'4',mins:q.mins||'60',equip:q.equip||'gym',focus:q.focus||'',avoid:Array.isArray(q.avoid)?q.avoid.slice():[]};}
+function minsOf(p){const m=String(p.mins).match(/\d+/g)||[60];return +m[m.length-1];}
+function recommend(q){
+  const lvl={new:'Starter',some:'Intermediate',years:'Advanced'}[q.exp];
+  const days=+q.days,mins=+q.mins;
+  const eqOK=p=>q.equip==='gym'||(q.equip==='dumbbells'&&p.equip!=='gym')||(q.equip==='none'&&p.equip==='none');
+  return (window.CL_PROGRAMS||[]).filter(eqOK).map(p=>{
+    let s=0;const why=[];
+    if(q.focus&&p.focus===q.focus){s+=9;why.push('built around '+PFOCUS[q.focus].toLowerCase());}
+    else if(q.focus==='biceps'&&p.focus==='arms'){s+=6;why.push('lots of biceps work');}
+    if(p.goal===q.goal){s+=6;why.push({muscle:'built for muscle',strength:'built for strength',fatloss:'built for fat loss',home:'made for home training',beginner:'made for new lifters'}[q.goal]);}
+    else if(q.goal==='muscle'&&p.goal==='focus'){s+=3;}
+    else if(q.goal==='beginner'&&p.level==='Starter'){s+=4;}
+    if(q.exp==='new'&&p.goal==='beginner'){s+=7;why.push('made for new lifters');}
+    if(p.level===lvl){s+=5;why.push(p.level.toLowerCase()+' level');}
+    else if(Math.abs(PLEVELS.indexOf(p.level)-PLEVELS.indexOf(lvl))===1)s+=1;
+    else s-=4;
+    if(lvl==='Starter'&&p.level==='Advanced')s-=8;
+    if(p.perWeek===days){s+=5;why.push(days+' days a week');}
+    else if(Math.abs(p.perWeek-days)===1)s+=1;
+    else s-=3;
+    if(minsOf(p)<=mins+5){s+=2;why.push('fits '+mins+' minutes');}else s-=2;
+    if(q.equip!=='gym'&&p.equip===q.equip){s+=3;why.push(PEQ[p.equip].toLowerCase());}
+    return {p:p,s:s,why:why};
+  }).sort((a,b)=>b.s-a.s);
+}
+function recommendTop(q){
+  const all=recommend(q),top=all.slice(0,3);
+  if(q.focus&&!top.some(r=>r.p.focus===q.focus||(q.focus==='biceps'&&r.p.focus==='arms'))){
+    const f=all.find(r=>r.p.focus===q.focus&&!(q.exp==='new'&&r.p.level==='Advanced'));
+    if(f)top[top.length-1]=f;
+  }
+  return top;
+}
+function quizAdj(q){
+  const a={vol:q.exp==='new'?-1:0,avoid:q.avoid.slice(),focus:q.focus||''};
+  return (a.vol||a.avoid.length||a.focus)?a:null;
+}
+function pgQuizHTML(){
+  const q=ui.pg.q,opt=(name,v,l)=>'<button type="button" class="qopt" data-a="pg-q" data-k="'+name+'" data-v="'+v+'" aria-pressed="'+(String(q[name])===String(v))+'">'+l+'</button>';
+  let h='<button class="link" data-a="pg-back" style="margin:-6px 0 4px -8px">&lsaquo; All programmes</button><h2 style="margin:0 0 4px">Find my programme</h2><p class="sub" style="margin-bottom:12px">Six quick questions. The app picks the best 3 for you and adjusts them when you start.</p>';
+  h+='<div class="q"><b>Main goal</b><div class="qrow">'+opt('goal','muscle','Build muscle')+opt('goal','strength','Get stronger')+opt('goal','fatloss','Lose fat')+opt('goal','beginner','Get started')+opt('goal','home','Train at home')+'</div></div>';
+  h+='<div class="q"><b>Training experience</b><div class="qrow">'+opt('exp','new','New or back after a long break')+opt('exp','some','6 months to 2 years')+opt('exp','years','2+ years, consistent')+'</div></div>';
+  h+='<div class="q"><b>Days a week</b><div class="qrow">'+['2','3','4','5','6'].map(d=>opt('days',d,d)).join('')+'</div></div>';
+  h+='<div class="q"><b>Time per session</b><div class="qrow">'+opt('mins','30','30 min')+opt('mins','45','45 min')+opt('mins','60','60 min')+opt('mins','90','75+ min')+'</div></div>';
+  h+='<div class="q"><b>Equipment</b><div class="qrow">'+opt('equip','gym','Full gym')+opt('equip','dumbbells','Dumbbells')+opt('equip','none','Nothing')+'</div></div>';
+  h+='<div class="q"><b>Extra focus (optional)</b><div class="qrow">'+opt('focus','','None')+Object.keys(PFOCUS).map(k=>opt('focus',k,PFOCUS[k])).join('')+'</div></div>';
+  h+='<div class="q"><b>Go easy on (optional)</b><div class="qrow">'+[['knees','Knees'],['back','Lower back'],['shoulders','Shoulders']].map(a=>'<button type="button" class="qopt" data-a="pg-qa" data-v="'+a[0]+'" aria-pressed="'+(q.avoid.indexOf(a[0])>=0)+'">'+a[1]+'</button>').join('')+'</div><p class="sub" style="margin-top:6px">Swaps in gentler exercises. General guidance, not medical advice: see a physio for an injury.</p></div>';
+  h+='<button class="btn full" data-a="pg-rec">Show my programmes</button>';
+  return h;
+}
+function pgRecHTML(){
+  const q=ui.pg.q,rs=recommendTop(q),adj=quizAdj(q);
+  let h='<button class="link" data-a="pg-quiz" style="margin:-6px 0 4px -8px">&lsaquo; Change answers</button><h2 style="margin:0 0 4px">Best for you</h2>';
+  if(adj)h+='<p class="sub" style="margin-bottom:6px">When you start one, the app will '+[adj.vol<0?'use one set fewer per exercise while you build up':'',adj.avoid.length?'swap in gentler exercises for your '+adj.avoid.join(' and '):'',adj.focus?'add extra '+PFOCUS[adj.focus].toLowerCase()+' work (unless it is already a '+PFOCUS[adj.focus].toLowerCase()+' programme)':''].filter(Boolean).join(', ')+'.</p>';
+  if(!rs.length)return h+'<p class="sub">Nothing fits those answers. Try a different equipment or days choice.</p>';
+  h+=rs.map((r,i)=>'<button class="pgrow'+(i===0?' top':'')+'" data-a="pg-view" data-id="'+r.p.id+'" data-fit="1"><span class="lt">'+(i===0?'<span class="chip good">Best match</span> ':'')+'<b>'+esc(r.p.name)+'</b><small>'+r.p.weeks+' weeks &middot; '+r.p.perWeek+' days &middot; '+PEQ[r.p.equip]+' &middot; '+r.p.level+'</small><span class="pgs">Why: '+esc(r.why.slice(0,4).join(', ')||'closest match')+'.</span></span><span class="chev" aria-hidden="true">&rsaquo;</span></button>').join('');
+  h+='<button class="btn ghost full" data-a="pg-back" style="margin-top:12px">See all programmes</button>';
+  return h;
+}
+
+/* ---------- browse and detail ---------- */
+function pgFilterMatch(p,G){
+  if(G.goal!=='All'){if(PFOCUS[G.goal]){if(p.focus!==G.goal)return false;}else if(p.goal!==G.goal)return false;}
+  if(G.lvl!=='All'&&p.level!==G.lvl)return false;
+  if(G.days!=='All'&&String(p.perWeek)!==G.days)return false;
+  if(G.eq!=='All'&&p.equip!==G.eq)return false;
+  return true;
+}
+function pgListHTML(){
+  const G=ui.pg,list=(window.CL_PROGRAMS||[]).filter(p=>pgFilterMatch(p,G));
+  const sel=(id,lbl,cur,opts)=>'<label for="'+id+'">'+lbl+'<select id="'+id+'" data-c="'+id+'"'+(cur!=='All'?' class="on"':'')+'>'+opts.map(o=>'<option value="'+o[0]+'"'+(o[0]===cur?' selected':'')+'>'+esc(o[1])+'</option>').join('')+'</select></label>';
+  let h='<div class="pgtop"><button class="btn full" data-a="pg-quiz">Find my programme</button><button class="btn ghost full" data-a="pg-new">+ Add your own</button></div>';
+  const mine=S.plan.myProgs||[];
+  if(mine.length){
+    h+='<div class="xh">Your programmes</div>'+mine.map(p=>'<div class="pgrow mine"><span class="lt"><b>'+esc(p.name)+(S.plan.prog&&S.plan.prog.id===p.id?' <span class="chip good">Active</span>':'')+'</b><small>'+p.weeks+' weeks &middot; '+(p.days||[]).length+' days'+(p.src?' &middot; '+esc(p.src):'')+'</small></span>'+(S.plan.prog&&S.plan.prog.id===p.id?'':'<button class="btn sm" data-a="pg-mstart" data-id="'+esc(p.id)+'">Start</button><button class="ibtn bad" data-a="pg-mdel" data-id="'+esc(p.id)+'" aria-label="Delete '+esc(p.name)+'">'+ICO.trash+'</button>')+'</div>').join('');
+    h+='<div class="xh">Ready-made</div>';
+  }
+  h+='<div class="fbar four">'+sel('pg-goal','Goal or focus',G.goal,PGOAL)+sel('pg-lvl','Level',G.lvl,[['All','Any']].concat(PLEVELS.map(l=>[l,l])))+sel('pg-days','Days a week',G.days,[['All','Any']].concat([2,3,4,5,6].map(n=>[String(n),n+' days'])))+sel('pg-eq','Equipment',G.eq,[['All','Any'],['gym','Gym'],['dumbbells','Dumbbells'],['none','None']])+'</div>';
+  h+='<p class="sub" style="margin:10px 2px 4px">'+list.length+' programme'+(list.length===1?'':'s')+(G.goal!=='All'||G.lvl!=='All'||G.days!=='All'||G.eq!=='All'?' &middot; <button class="link" data-a="pg-clear" style="min-height:0;padding:0">Clear filters</button>':'')+'</p>';
+  if(!list.length)h+='<p class="sub" style="padding:10px 2px">Nothing matches. Try fewer filters.</p>';
+  PLEVELS.forEach(lv=>{
+    const L=list.filter(p=>p.level===lv);if(!L.length)return;
+    h+='<div class="pglv">'+lv+'</div>';
+    h+=L.map(p=>'<button class="pgrow" data-a="pg-view" data-id="'+p.id+'"><span class="lt"><b>'+esc(p.name)+(S.plan.prog&&S.plan.prog.id===p.id?' <span class="chip good">Active</span>':'')+'</b><small>'+p.weeks+' weeks &middot; '+p.perWeek+' days &middot; '+PEQ[p.equip]+(p.focus?' &middot; '+PFOCUS[p.focus]+' focus':'')+'</small><span class="pgs">'+esc(p.summary)+'</span></span><span class="chev" aria-hidden="true">&rsaquo;</span></button>').join('');
+  });
+  return h;
+}
+function pgDetailHTML(){
+  const pr=progById(ui.pg.id);if(!pr)return '';
+  const act=S.plan.prog&&S.plan.prog.id===pr.id,adj=ui.pg.fit?quizAdj(ui.pg.q):null;
+  let h='<button class="link" data-a="'+(ui.pg.fit?'pg-rec':'pg-back')+'" style="margin:-6px 0 4px -8px">&lsaquo; '+(ui.pg.fit?'Your matches':'All programmes')+'</button><h2 style="margin:0 0 6px">'+esc(pr.name)+'</h2>';
+  h+='<div class="xtags"><span class="xt pm">'+pr.weeks+' weeks</span><span class="xt">'+pr.perWeek+' days a week</span><span class="xt">'+PEQ[pr.equip]+'</span><span class="xt">'+esc(pr.level)+'</span><span class="xt">'+pr.mins+' min</span>'+(pr.focus?'<span class="xt pm">'+PFOCUS[pr.focus]+' focus</span>':'')+'</div>';
+  h+='<p style="margin:12px 0 6px">'+esc(pr.summary)+'</p><p class="sub" style="margin-bottom:10px"><b>Method:</b> '+esc(pr.method)+'</p>';
+  h+='<div class="xh">Rules and tips</div><ul class="pgtips">'+pr.tips.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul>';
+  h+='<div class="xh">How the weeks go</div><div class="pgweeks">';
+  const wave=pr.plan.some(d=>d.ex.some(e=>e[6]));
+  for(let w=1;w<=pr.weeks;w++){
+    const f=phaseFor(pr,w);
+    h+='<div class="pgw'+(f.deload?' easy':'')+'"><b>'+w+'</b><span>'+(f.deload?'Easier week':wave?['Fives','Threes','5-3-1','Light'][waveWeek(pr,w)-1]:esc(f.ph.label)+' &middot; '+scheme(f.ph.main))+'</span></div>';
+  }
+  h+='</div><p class="sub" style="margin-top:6px">'+(wave?'Main lifts follow a monthly wave of percentages of your training max. Assistance work: '+scheme(pr.phases[0].acc)+'.':'Week, then sets × reps for the main lifts. Other exercises: '+pr.phases.map(p=>esc(p.label)+' '+scheme(p.acc)).join(', ')+'.')+'</p>';
+  if(adj)h+='<p class="au-msg good" style="margin-top:10px">Adjusted for you: '+[adj.vol<0?'one set fewer per exercise while you build up':'',adj.avoid.length?'gentler swaps for your '+adj.avoid.join(' and '):'',adj.focus&&pr.focus!==adj.focus?'extra '+PFOCUS[adj.focus].toLowerCase()+' work added':''].filter(Boolean).join(', ')+'. Shown below.</p>';
+  h+='<div class="xh">The days (week 1)</div>';
+  progRows(pr,adj).forEach((d,i)=>{
+    h+='<div class="pgday"><div class="pgdh"><b>'+esc(d.name)+'</b><span>'+(pr.sched[i]!==undefined?WDL[pr.sched[i]]:'')+'</span></div>';
+    d.ex.forEach(e=>{const x=exForWeek(e,pr,1,adj);h+='<div class="pgex"><span>'+esc(e[0])+(e[4]?' <span class="chip">Main</span>':'')+(e[5]?'<small>'+esc(e[5])+'</small>':'')+'</span><span class="pgsr">'+(x.pct?x.pct.join('/')+'%':x.s+' &times; '+esc(x.r))+'</span><button class="link" data-a="xb-ex" data-n="'+esc(e[0])+'">How to</button></div>';});
+    h+='</div>';
+  });
+  h+='<p class="sub" style="margin:12px 0">Sets and reps update automatically each week. General guidance, not personalised medical advice: stop any exercise that causes pain, and check with a professional if you have an injury or health condition.</p>';
+  h+=act?'<p class="au-msg good">This is your active programme.</p>':'<button class="btn full" data-a="pg-start" data-id="'+pr.id+'">'+(ui.pg.arm===pr.id?(S.plan.prog?'Tap again: replace your current programme':'Tap again to start'):'Start this programme')+'</button><p class="sub" style="margin-top:8px">'+(S.plan.prog?'Your current programme ends. ':'')+'Your own plan is saved, and End programme on the Plan tab brings it back. Your logs are never deleted.</p>';
+  return h;
+}
+function pgNewHTML(){
+  const n=ui.pg.nw;
+  return '<button class="link" data-a="pg-back" style="margin:-6px 0 4px -8px">&lsaquo; All programmes</button><h2 style="margin:0 0 4px">Add your own programme</h2><p class="sub" style="margin-bottom:12px">For a programme you follow from a book, coach or website. It is saved to your account only, so it stays private to you.</p>'
+   +'<form id="pgnew" class="mform"><label for="pn-name" style="grid-column:1/-1">Name<input id="pn-name" value="'+esc(n.name)+'" placeholder="e.g. 12-week arm blast" maxlength="40"></label>'
+   +'<label for="pn-weeks">Length (weeks)<input id="pn-weeks" type="number" inputmode="numeric" min="1" max="52" value="'+esc(n.weeks)+'"></label>'
+   +'<label for="pn-days">Days a week<input id="pn-days" type="number" inputmode="numeric" min="1" max="7" value="'+esc(n.days)+'"></label>'
+   +'<label for="pn-src" style="grid-column:1/-1">Where it is from (optional)<input id="pn-src" value="'+esc(n.src)+'" placeholder="e.g. a coach, a book" maxlength="60"></label>'
+   +'<div style="grid-column:1/-1" class="qrow"><button type="button" class="qopt" data-a="pg-nfrom" data-v="blank" aria-pressed="'+(n.from==='blank')+'">Start with empty days</button><button type="button" class="qopt" data-a="pg-nfrom" data-v="copy" aria-pressed="'+(n.from==='copy')+'">Copy my current plan</button></div>'
+   +'<button class="btn full" type="submit" style="grid-column:1/-1">Create and start</button></form>'
+   +'<p class="sub" style="margin-top:10px">Next, on the Plan tab: tap each day, rename it, then use Add from library to add exercises with sets, reps and rest. Everything you change is saved into the programme.</p>';
+}
+function pgNewSubmit(e){
+  e.preventDefault();
+  const n=ui.pg.nw,name=($('#pn-name').value||'').trim().slice(0,40),weeks=Math.max(1,Math.min(52,parseInt($('#pn-weeks').value,10)||8)),days=Math.max(1,Math.min(7,parseInt($('#pn-days').value,10)||3)),src=($('#pn-src').value||'').trim().slice(0,60);
+  if(!name){toast('Give the programme a name');return;}
+  const WDS={1:[1],2:[2,5],3:[1,3,5],4:[1,2,4,5],5:[1,2,3,4,5],6:[1,2,3,4,5,6],7:[1,2,3,4,5,6,0]}[days];
+  const P=S.plan;
+  const base=n.from==='copy'?clone(P.prog?(P.myDays||[]):P.days):Array.from({length:days},(v,i)=>({id:'u'+i+uid8(),name:'Day '+(i+1),wd:WDS[i],note:'',ex:[]}));
+  base.forEach(d=>{d.id='u'+uid8();d.ex.forEach(x=>{x.id='ue'+uid8();delete x.pk;});});
+  const pr={id:'my'+uid8(),custom:true,name:name,src:src,weeks:weeks,perWeek:base.length,equip:'gym',level:'Custom',goal:'custom',mins:'',summary:src?'From '+src+'.':'Your own programme.',method:'Your own programme.',tips:[],sched:base.map(d=>d.wd),phases:[],deload:[],plan:[],days:base};
+  P.myProgs=(P.myProgs||[]).concat([pr]);
+  progStart(pr.id,null);
+}
+function paintPg(){
+  const m=$('#modal'),G=ui.pg;
+  const body={detail:pgDetailHTML,quiz:pgQuizHTML,rec:pgRecHTML,nw:pgNewHTML}[G.mode];
+  m.innerHTML='<div class="mback" data-a="pm-close"></div><div class="sheet lib xsheet" role="dialog" aria-modal="true" aria-label="Programmes"><div class="shh"><h2>Programmes</h2><button class="link" data-a="pm-close">Close</button></div><div class="xscroll" id="pg-scroll">'+(body?body():pgListHTML())+'</div></div>';
+  m.hidden=false;
+  const f=$('#pgnew');if(f)f.addEventListener('submit',pgNewSubmit);
+}
+function pgNewState(){return {mode:'list',goal:'All',lvl:'All',days:'All',eq:'All',id:null,arm:null,fit:false,q:quizDefaults(),nw:{name:'',weeks:8,days:3,src:'',from:'blank'}};}
+function pgScrollTop(){const sc=$('#pg-scroll');if(sc)sc.scrollTop=0;}
+function pgAction(a,D){
+  if(a==='pg-open'){ui.pg=pgNewState();paintModal();return true;}
+  if(!ui.pg&&a!=='pg-end')ui.pg=pgNewState();
+  if(a==='pg-quiz'){ui.pg.mode='quiz';ui.pg.fit=false;paintModal();pgScrollTop();return true;}
+  if(a==='pg-q'){ui.pg.q[D.k]=D.v;paintModal();const sc=$('#pg-scroll');return true;}
+  if(a==='pg-qa'){const av=ui.pg.q.avoid,i=av.indexOf(D.v);if(i>=0)av.splice(i,1);else av.push(D.v);paintModal();return true;}
+  if(a==='pg-rec'){S.plan.profile=Object.assign({},ui.pg.q,{t:Date.now()});touchPlan();ui.pg.mode='rec';ui.pg.fit=false;paintModal();pgScrollTop();return true;}
+  if(a==='pg-view'){ui.pg.mode='detail';ui.pg.id=D.id;ui.pg.arm=null;ui.pg.fit=!!D.fit||(ui.pg.fit&&ui.pg.mode==='detail');paintModal();pgScrollTop();return true;}
+  if(a==='pg-back'){ui.pg.mode='list';ui.pg.arm=null;ui.pg.fit=false;paintModal();pgScrollTop();return true;}
+  if(a==='pg-clear'){ui.pg.goal='All';ui.pg.lvl='All';ui.pg.days='All';ui.pg.eq='All';paintModal();return true;}
+  if(a==='pg-new'){ui.pg.mode='nw';paintModal();pgScrollTop();return true;}
+  if(a==='pg-nfrom'){const n=ui.pg.nw;n.name=($('#pn-name')||{}).value||n.name;n.weeks=($('#pn-weeks')||{}).value||n.weeks;n.days=($('#pn-days')||{}).value||n.days;n.src=($('#pn-src')||{}).value||n.src;n.from=D.v;paintModal();return true;}
+  if(a==='pg-start'){
+    if(ui.pg.arm!==D.id){ui.pg.arm=D.id;paintModal();const sc=$('#pg-scroll');if(sc)sc.scrollTop=sc.scrollHeight;const id=D.id;setTimeout(()=>{if(ui.pg&&ui.pg.arm===id){ui.pg.arm=null;paintModal();}},4000);return true;}
+    progStart(D.id,ui.pg.fit?quizAdj(ui.pg.q):null);return true;
+  }
+  if(a==='pg-mstart'){progStart(D.id,null);return true;}
+  if(a==='pg-mdel'){
+    if(ui.pg.arm!=='del'+D.id){ui.pg.arm='del'+D.id;toast('Tap the bin again to delete this programme. Your logs stay.',null,3500);const id=D.id;setTimeout(()=>{if(ui.pg&&ui.pg.arm==='del'+id)ui.pg.arm=null;},3500);return true;}
+    S.plan.myProgs=(S.plan.myProgs||[]).filter(p=>p.id!==D.id);touchPlan();ui.pg.arm=null;paintModal();toast('Programme deleted');return true;
+  }
+  if(a==='pg-end'){if(twoTap('pgend'))progEnd();return true;}
+  return false;
+}
+
+/* ---------- coaching: percentage waves and stalls ---------- */
+function rnd25(x){return Math.max(0,Math.round(x/2.5)*2.5);}
+function waveSuggest(ex,date){
+  const best=bestBefore(ex,date);
+  if(!best)return {ws:ex.pct.map(()=>''),rs:(ex.prs||[]).map(r=>parseInt(r,10)||''),note:'First time on this lift: pick a weight you can do 5 good reps with. After you log it, the app works out your wave weights.'};
+  const tm=best*0.9,ws=ex.pct.map(p=>rnd25(tm*p/100)),rs=(ex.prs||[]).map(r=>parseInt(r,10)||'');
+  const plus=(ex.prs||[]).some(r=>/\+/.test(String(r)));
+  return {ws:ws,rs:rs,note:'Training max '+fmt(rnd25(tm))+' kg (90% of your best estimated 1-rep max). Today: '+ws.map((w,i)=>fmt(w)+' kg × '+ex.prs[i]).join(', ')+'.'+(plus?' Last set: as many good reps as you can.':'')};
+}
+function stallCheck(ex,date){
+  const ds=sortedDates().filter(k=>k<date).reverse(),out=[];
+  for(const k of ds){
+    const st=setsNamed(S.days[k],ex.id).filter(x=>x.d&&+x.w>0&&isRef(x));
+    if(!st.length)continue;
+    out.push({w:Math.max.apply(null,st.map(x=>+x.w)),e:Math.max.apply(null,st.map(x=>e1(x.w,x.r)))});
+    if(out.length===3)break;
+  }
+  if(out.length<3)return null;
+  const sameW=out.every(x=>x.w===out[0].w),noGain=out[0].e<=out[2].e*1.005;
+  if(sameW&&noGain)return {w:out[0].w,drop:rnd25(out[0].w*0.9)};
+  return null;
 }
 
 /* ================= standalone: Firebase sign-in, sync, scanner, photos ================= */
@@ -4026,7 +4403,8 @@ if('serviceWorker' in navigator&&window.isSecureContext){
     setInterval(()=>reg.update().catch(()=>{}),60*60*1000);
   }).catch(()=>{});
   let reloading=false;
-  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloading)return;reloading=true;location.reload();});
+  // Only reload when the person tapped Update. The first install also fires this event, and a reload then would wipe what they are typing.
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloading||!ui.swAsked)return;reloading=true;location.reload();});
 }
 
 document.addEventListener('submit',e=>{
