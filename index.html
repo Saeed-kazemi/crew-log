@@ -2785,7 +2785,7 @@ function viewMore(){
   d+='<p class="sub">Last backup file: '+(st.lastExport?fmtLong(st.lastExport):'never')+'.</p>';
   h+=secCard('data','Backup and restore','Export, import and weekly snapshots',d);
   h+=secCard('rs','Reset plan','Put the training days back to the 5-day starter plan','<p class="sub">Your logs, food, measurements, targets and settings stay.</p><button class="btn bad" data-a="reset-plan">'+(ui.arm==='reset'?'Tap again to reset the plan':'Reset to the starter plan')+'</button>');
-  h+=secCard('acct','Password and account','Change your password or delete your account','<form id="pwform" class="mform" novalidate><label for="pw-cur" style="grid-column:1/-1">Current password<input id="pw-cur" type="password" autocomplete="current-password"></label><label for="pw-new" style="grid-column:1/-1">New password (10+ characters, with a capital, a small letter, a number and a symbol)<input id="pw-new" type="password" autocomplete="new-password" minlength="10"></label><button class="btn ghost" type="submit" style="grid-column:1/-1">Change password</button></form>'
+  h+=secCard('acct','Password and account','Change your password or delete your account','<form id="pwform" class="mform" novalidate><label for="pw-cur" style="grid-column:1/-1">Current password<input id="pw-cur" type="password" autocomplete="current-password"></label><label for="pw-new" style="grid-column:1/-1">New password (10 to 45 characters, with a capital, a small letter, a number and a symbol)<input id="pw-new" type="password" autocomplete="new-password" minlength="10"></label><button class="btn ghost" type="submit" style="grid-column:1/-1">Change password</button></form>'
    +'<div class="dz"><b>Delete account</b><p class="sub">Removes your account and everything in it: plan, logs, food, measurements and photos. This cannot be undone. Export a backup first if you want a copy.</p><form id="delform" novalidate><label for="del-pw">Type your password to confirm<input id="del-pw" type="password" autocomplete="current-password"></label><button class="btn bad full" type="submit" style="margin-top:8px">'+(ui.arm==='delacct'?'Tap again to delete everything':'Delete my account')+'</button></form></div>');
   return h;
 }
@@ -3665,14 +3665,14 @@ const AUERR={
   'auth/invalid-email':'That email address does not look right.',
   'auth/email-already-in-use':'There is already an account with this email. Sign in instead, or reset your password.',
   'auth/weak-password':'Choose a longer password: at least 10 characters.',
-  'auth/password-does-not-meet-requirements':'That password does not meet the rules: at least 10 characters, with a capital letter, a small letter, a number and a symbol.',
+  'auth/password-does-not-meet-requirements':'That password does not meet the rules: 10 to 45 characters, with a capital letter, a small letter, a number and a symbol.',
   'auth/too-many-requests':'Too many attempts. Wait a few minutes, or reset your password.',
   'auth/network-request-failed':'No internet connection. You need a connection to sign in or create an account.',
   'auth/requires-recent-login':'For your security, enter your password again first.',
   'auth/user-disabled':'This account has been switched off.'
 };
 function auMsg(e){return (e&&AUERR[e.code])||'Something went wrong. Try again.';}
-const PWR=[[p=>p.length>=10,'10 or more characters'],[p=>/[A-Z]/.test(p),'A capital letter'],[p=>/[a-z]/.test(p),'A small letter'],[p=>/\d/.test(p),'A number'],[p=>/[\^$*.\[\]{}()?"!@#%&\/\\,><':;|_~`]/.test(p),'A symbol, like ! ? @ # or _']];
+const PWR=[[p=>p.length>=10&&p.length<=45,'10 to 45 characters'],[p=>/[A-Z]/.test(p),'A capital letter'],[p=>/[a-z]/.test(p),'A small letter'],[p=>/\d/.test(p),'A number'],[p=>/[\^$*.\[\]{}()?"!@#%&\/\\,><':;|_~`]/.test(p),'A symbol, like ! ? @ # or _']];
 function pwOk(p){return PWR.every(r=>r[0](p));}
 function pwList(p){return PWR.map(r=>'<li class="'+(r[0](p)?'ok':'')+'">'+r[1]+'</li>').join('');}
 function pwScore(p){let s=0;if(p.length>=10)s++;if(p.length>=14)s++;if(/[a-z]/.test(p)&&/[A-Z]/.test(p))s++;if(/\d/.test(p))s++;if(/[^A-Za-z0-9]/.test(p))s++;return s;}
@@ -3733,7 +3733,7 @@ async function auSubmit(e){
       await F.signInWithEmailAndPassword(AUTH,email,pw);
     }else if(mode==='up'){
       const pw=$('#au-pass').value,pw2=$('#au-pass2').value;
-      if(!pwOk(pw)){AU.err='The password needs everything on the list: at least 10 characters, a capital letter, a small letter, a number and a symbol.';renderAuth();return;}
+      if(!pwOk(pw)){AU.err='The password needs everything on the list: 10 to 45 characters, a capital letter, a small letter, a number and a symbol.';renderAuth();return;}
       if(pw!==pw2){AU.err='The two passwords do not match.';renderAuth();return;}
       AU.busy=true;renderAuth();
       const cred=await F.createUserWithEmailAndPassword(AUTH,email,pw);
@@ -3817,7 +3817,7 @@ async function deleteAccount(pw){
 }
 async function changePassword(cur,nw){
   const F=window.FB;
-  if(!pwOk(nw)){toast('New password needs 10+ characters, a capital letter, a small letter, a number and a symbol.',null,5500);return false;}
+  if(!pwOk(nw)){toast('New password needs 10 to 45 characters, a capital letter, a small letter, a number and a symbol.',null,5500);return false;}
   try{
     await F.reauthenticateWithCredential(USER,F.EmailAuthProvider.credential(USER.email,cur));
     await F.updatePassword(USER,nw);toast('Password changed');return true;
