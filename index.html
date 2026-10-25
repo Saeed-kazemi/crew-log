@@ -119,6 +119,10 @@ body.authed-out .app{padding-bottom:40px}
 .fbar select{margin-top:3px;padding:10px 26px 10px 10px;text-overflow:ellipsis;white-space:nowrap;overflow:hidden;min-height:46px}
 .fbar select.on{background-color:var(--accent-soft);border-bottom-color:var(--accent);color:var(--accent);font-weight:600}
 @media (min-width:600px){.fbar{grid-template-columns:repeat(3,minmax(0,1fr))}.fbar label:first-child{grid-column:auto}}
+
+.au-splash{display:flex;align-items:center;justify-content:center;gap:12px;padding:18px 0;color:var(--sub);font-weight:600}
+.spin{width:22px;height:22px;border-radius:50%;border:3px solid var(--accent-soft);border-top-color:var(--accent);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -3722,7 +3726,8 @@ function renderAuth(){
       +'<button class="btn full" data-a="au-check"'+(A.busy?' disabled':'')+'>'+(A.busy?'Checking...':'I have confirmed it')+'</button>'
       +'<div class="au-links"><button class="link" data-a="au-resend">Send the email again</button><button class="link" data-a="au-out">Use a different email</button></div>';
   }else if(A.mode==='load'){
-    h+='<h2>Loading your account...</h2><p class="sub">'+(navigator.onLine?'One moment.':'You are offline. Connect to the internet once on this device to load your account.')+'</p>';
+    if(USER)h+='<h2>Loading your data...</h2><p class="sub">'+(navigator.onLine?'One moment.':'You are offline. Connect to the internet once on this device to load your account.')+'</p>';
+    else h+='<div class="au-splash" role="status"><span class="spin" aria-hidden="true"></span><span>Opening Crew Log...</span></div>';
   }
   h+='</div><p class="sub au-foot">Your data is stored in your own account. Security rules on the server stop anyone else, including other people using this app, from reading or changing it.</p></div>';
   m.innerHTML=h;
@@ -3780,6 +3785,7 @@ async function auAction(a,D){
 function freshState(){S.plan=defaultPlan();S.meas=normMeas();S.days={};}
 function startApp(user){
   USER=user;UID=user.uid;READY=false;
+  try{localStorage.setItem('cl_signed','1');}catch(e){}
   document.body.classList.remove('authed-out');
   const nav=document.querySelector('.nav');if(nav)nav.hidden=false;
   freshState();
@@ -3796,7 +3802,7 @@ function startApp(user){
 async function wipeLocal(){
   try{if(UNSUB)UNSUB();}catch(e){}
   try{if(PHUNSUB)PHUNSUB();}catch(e){}
-  try{if(UID)localStorage.removeItem(lkey());localStorage.removeItem('cl_nav');}catch(e){}
+  try{if(UID)localStorage.removeItem(lkey());localStorage.removeItem('cl_nav');localStorage.removeItem('cl_signed');}catch(e){}
   try{const F=FX();if(FS&&F.terminate){await F.terminate(FS);if(F.clearIndexedDbPersistence)await F.clearIndexedDbPersistence(FS);}}catch(e){}
 }
 async function doSignOut(force){
@@ -4035,7 +4041,7 @@ try{ui.theme=localStorage.getItem('coach_theme')||'auto';}catch(e){ui.theme='aut
 applyTheme();
 if(!fbInit()){renderAuth();}
 else{
-  showAuth('load');
+  {let was=false;try{was=localStorage.getItem('cl_signed')==='1';}catch(e){}showAuth(was?'load':'in');}
   window.FB.onAuthStateChanged(AUTH,user=>{
     if(!user){USER=null;UID=null;if(AU.mode==='load'||AU.mode==='verify'||!document.getElementById('au-form'))showAuth(AU.mode==='load'||AU.mode==='verify'?'in':AU.mode,AU.err,AU.info);return;}
     USER=user;
