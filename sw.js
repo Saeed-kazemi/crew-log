@@ -1,5 +1,5 @@
 // Offline support. Bump VERSION whenever any file changes so phones pick up the new version.
-const VERSION = 'tc-2026-10-25-7';
+const VERSION = 'tc-2026-10-25-8';
 const CORE = [
   './', 'index.html', 'firebase-config.js', 'vendor.js', 'zxing_reader.wasm', 'exdb.json',
   'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'
@@ -23,9 +23,10 @@ self.addEventListener('message', e => { if (e.data === 'skip') self.skipWaiting(
 // (slow gym signal) or straight away when offline.
 function networkFirst(req) {
   const fromCache = () => caches.match(req, { ignoreSearch: true }).then(r => r || caches.match('index.html'));
+  // If the host returns an error page (404, or 503 during a GitHub outage), keep using the saved app.
   const net = fetch(req).then(res => {
-    if (res.ok) { const copy = res.clone(); caches.open(VERSION).then(c => c.put(req, copy)); }
-    return res;
+    if (res.ok) { const copy = res.clone(); caches.open(VERSION).then(c => c.put(req, copy)); return res; }
+    return fromCache().then(r => r || res);
   });
   const timer = new Promise(resolve => setTimeout(resolve, 3500)).then(fromCache);
   return Promise.race([net.catch(fromCache), timer.then(r => r || net)]);
