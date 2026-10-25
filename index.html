@@ -104,6 +104,12 @@ body.authed-out .app{padding-bottom:40px}
 @media (max-width:899px){
   .sheet .chips,.pvchips{-webkit-mask-image:linear-gradient(to right,#000 82%,transparent);mask-image:linear-gradient(to right,#000 82%,transparent);padding-right:36px}
 }
+
+.pwr{list-style:none;margin:-4px 0 0;padding:0;display:grid;gap:4px;font-size:.85rem;color:var(--sub)}
+.pwr li{display:flex;align-items:center;gap:8px}
+.pwr li::before{content:"";width:16px;height:16px;border-radius:50%;border:2px solid var(--line);flex:none;box-sizing:border-box}
+.pwr li.ok{color:var(--good)}
+.pwr li.ok::before{background:var(--good);border-color:var(--good);content:"\2713";color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1}
 </style>
 </head>
 <body>
@@ -2779,7 +2785,7 @@ function viewMore(){
   d+='<p class="sub">Last backup file: '+(st.lastExport?fmtLong(st.lastExport):'never')+'.</p>';
   h+=secCard('data','Backup and restore','Export, import and weekly snapshots',d);
   h+=secCard('rs','Reset plan','Put the training days back to the 5-day starter plan','<p class="sub">Your logs, food, measurements, targets and settings stay.</p><button class="btn bad" data-a="reset-plan">'+(ui.arm==='reset'?'Tap again to reset the plan':'Reset to the starter plan')+'</button>');
-  h+=secCard('acct','Password and account','Change your password or delete your account','<form id="pwform" class="mform" novalidate><label for="pw-cur" style="grid-column:1/-1">Current password<input id="pw-cur" type="password" autocomplete="current-password"></label><label for="pw-new" style="grid-column:1/-1">New password (at least 10 characters)<input id="pw-new" type="password" autocomplete="new-password" minlength="10"></label><button class="btn ghost" type="submit" style="grid-column:1/-1">Change password</button></form>'
+  h+=secCard('acct','Password and account','Change your password or delete your account','<form id="pwform" class="mform" novalidate><label for="pw-cur" style="grid-column:1/-1">Current password<input id="pw-cur" type="password" autocomplete="current-password"></label><label for="pw-new" style="grid-column:1/-1">New password (10+ characters, with a capital, a small letter, a number and a symbol)<input id="pw-new" type="password" autocomplete="new-password" minlength="10"></label><button class="btn ghost" type="submit" style="grid-column:1/-1">Change password</button></form>'
    +'<div class="dz"><b>Delete account</b><p class="sub">Removes your account and everything in it: plan, logs, food, measurements and photos. This cannot be undone. Export a backup first if you want a copy.</p><form id="delform" novalidate><label for="del-pw">Type your password to confirm<input id="del-pw" type="password" autocomplete="current-password"></label><button class="btn bad full" type="submit" style="margin-top:8px">'+(ui.arm==='delacct'?'Tap again to delete everything':'Delete my account')+'</button></form></div>');
   return h;
 }
@@ -3659,13 +3665,16 @@ const AUERR={
   'auth/invalid-email':'That email address does not look right.',
   'auth/email-already-in-use':'There is already an account with this email. Sign in instead, or reset your password.',
   'auth/weak-password':'Choose a longer password: at least 10 characters.',
-  'auth/password-does-not-meet-requirements':'That password does not meet the rules. Use at least 10 characters with a mix of letters and numbers.',
+  'auth/password-does-not-meet-requirements':'That password does not meet the rules: at least 10 characters, with a capital letter, a small letter, a number and a symbol.',
   'auth/too-many-requests':'Too many attempts. Wait a few minutes, or reset your password.',
   'auth/network-request-failed':'No internet connection. You need a connection to sign in or create an account.',
   'auth/requires-recent-login':'For your security, enter your password again first.',
   'auth/user-disabled':'This account has been switched off.'
 };
 function auMsg(e){return (e&&AUERR[e.code])||'Something went wrong. Try again.';}
+const PWR=[[p=>p.length>=10,'10 or more characters'],[p=>/[A-Z]/.test(p),'A capital letter'],[p=>/[a-z]/.test(p),'A small letter'],[p=>/\d/.test(p),'A number'],[p=>/[\^$*.\[\]{}()?"!@#%&\/\\,><':;|_~`]/.test(p),'A symbol, like ! ? @ # or _']];
+function pwOk(p){return PWR.every(r=>r[0](p));}
+function pwList(p){return PWR.map(r=>'<li class="'+(r[0](p)?'ok':'')+'">'+r[1]+'</li>').join('');}
 function pwScore(p){let s=0;if(p.length>=10)s++;if(p.length>=14)s++;if(/[a-z]/.test(p)&&/[A-Z]/.test(p))s++;if(/\d/.test(p))s++;if(/[^A-Za-z0-9]/.test(p))s++;return s;}
 function showAuth(mode,err,info){AU.mode=mode;AU.err=err||'';AU.info=info||'';AU.busy=false;renderAuth();}
 function renderAuth(){
@@ -3688,8 +3697,8 @@ function renderAuth(){
       +'<div class="au-links"><button class="link" data-a="au-mode" data-m="reset">Forgot password?</button></div>'
       +'<div class="au-alt"><span>New here?</span><button class="btn ghost full" data-a="au-mode" data-m="up">Create an account</button></div>';
   }else if(A.mode==='up'){
-    h+='<h1>Create your account</h1>'+note+'<form id="au-form" data-f="up" novalidate>'+em+pw('au-pass','Password (at least 10 characters)','new-password')
-      +'<div class="pwm" id="pwm" aria-live="polite"><i></i><i></i><i></i><i></i><i></i><span>Use 10 or more characters. A short phrase is easy to remember and hard to guess.</span></div>'
+    h+='<h1>Create your account</h1>'+note+'<form id="au-form" data-f="up" novalidate>'+em+pw('au-pass','Password','new-password')
+      +'<ul class="pwr" id="pwr" aria-live="polite">'+pwList('')+'</ul>'
       +pw('au-pass2','Type the password again','new-password')
       +'<button class="btn full" type="submit"'+(A.busy?' disabled':'')+'>'+(A.busy?'Creating...':'Create account')+'</button></form>'
       +'<p class="sub au-small">We send a link to check the email is yours. Your data is private to your account.</p>'
@@ -3708,7 +3717,7 @@ function renderAuth(){
   h+='</div><p class="sub au-foot">Your data is stored in your own account. Security rules on the server stop anyone else, including other people using this app, from reading or changing it.</p></div>';
   m.innerHTML=h;
   const f=$('#au-form');if(f)f.addEventListener('submit',auSubmit);
-  const p=$('#au-pass');if(p&&A.mode==='up')p.addEventListener('input',()=>{const s=pwScore(p.value),bars=document.querySelectorAll('#pwm i');bars.forEach((b,i)=>b.className=i<s?(s<3?'w':'s'):'');});
+  const p=$('#au-pass');if(p&&A.mode==='up')p.addEventListener('input',()=>{const l=$('#pwr');if(l)l.innerHTML=pwList(p.value);});
   const fe=$('#au-email');if(fe&&!A.email&&window.innerWidth>=700)fe.focus();
 }
 async function auSubmit(e){
@@ -3724,8 +3733,7 @@ async function auSubmit(e){
       await F.signInWithEmailAndPassword(AUTH,email,pw);
     }else if(mode==='up'){
       const pw=$('#au-pass').value,pw2=$('#au-pass2').value;
-      if(pw.length<10){AU.err='Use at least 10 characters for the password.';renderAuth();return;}
-      if(pwScore(pw)<2){AU.err='That password is easy to guess. Make it longer or add numbers or symbols.';renderAuth();return;}
+      if(!pwOk(pw)){AU.err='The password needs everything on the list: at least 10 characters, a capital letter, a small letter, a number and a symbol.';renderAuth();return;}
       if(pw!==pw2){AU.err='The two passwords do not match.';renderAuth();return;}
       AU.busy=true;renderAuth();
       const cred=await F.createUserWithEmailAndPassword(AUTH,email,pw);
@@ -3809,7 +3817,7 @@ async function deleteAccount(pw){
 }
 async function changePassword(cur,nw){
   const F=window.FB;
-  if(nw.length<10||pwScore(nw)<2){toast('Use at least 10 characters, and make it hard to guess.',null,4500);return false;}
+  if(!pwOk(nw)){toast('New password needs 10+ characters, a capital letter, a small letter, a number and a symbol.',null,5500);return false;}
   try{
     await F.reauthenticateWithCredential(USER,F.EmailAuthProvider.credential(USER.email,cur));
     await F.updatePassword(USER,nw);toast('Password changed');return true;
