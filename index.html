@@ -165,6 +165,37 @@ body.authed-out .app{padding-bottom:40px}
 .qrow{display:flex;flex-wrap:wrap;gap:8px}
 .qopt{border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:12px;padding:10px 14px;font-weight:600;font-size:.9rem;min-height:44px;cursor:pointer}
 .qopt[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+/* sheets repainted in place do not slide in again */
+.sheet.still{animation:none}
+/* step-by-step programme quiz */
+.qhead{display:flex;justify-content:space-between;align-items:center;margin:-4px 0 8px}
+.qhead .link{margin-left:-8px}
+.qhead span{font-size:.8rem;font-weight:700;color:var(--sub);letter-spacing:.04em;text-transform:uppercase}
+.qbar{height:6px;border-radius:3px;background:var(--accent-soft);overflow:hidden;margin-bottom:18px}
+.qbar i{display:block;height:100%;background:var(--accent);border-radius:3px;transition:width .25s ease}
+.qt{font-size:1.35rem;line-height:1.25;margin:0 0 12px;text-wrap:balance}
+.qlist{display:grid;gap:10px}
+.qlist.g2{grid-template-columns:1fr 1fr}
+.qlist.g5{grid-template-columns:repeat(5,1fr)}
+.qcard{position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;text-align:left;min-height:56px;padding:12px 44px 12px 16px;border:1.5px solid var(--line);border-radius:14px;background:var(--surface);color:var(--text);font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color .12s,background .12s}
+.qcard b{font-size:1rem;font-weight:700}
+.qcard span{font-size:.85rem;color:var(--sub)}
+.qcard i{position:absolute;right:14px;top:50%;width:22px;height:22px;margin-top:-11px;border-radius:50%;border:2px solid var(--line)}
+.qcard[aria-pressed="true"],.qcard[aria-checked="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.qcard[aria-pressed="true"] i,.qcard[aria-checked="true"] i{border-color:var(--accent);background:var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5L19 7'/%3E%3C/svg%3E") center/14px no-repeat}
+.qlist.g5 .qcard{align-items:center;padding:0;min-height:64px}
+.qlist.g5 .qcard b{font-size:1.4rem}
+.qlist.g5 .qcard i{display:none}
+.qlist.g5 .qcard[aria-checked="true"]{background:var(--accent);color:var(--on-accent)}
+.qlist.g2 .qcard{padding-right:40px}
+.qnext{position:sticky;bottom:-1px;padding:14px 0 2px;margin-top:8px;background:linear-gradient(transparent,var(--surface) 30%)}
+.qnext .btn:disabled{opacity:.45;cursor:not-allowed}
+.acctbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:12px}
+.acctbar>div{min-width:0;display:flex;flex-direction:column}
+.acctbar b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acctbar .btn{flex-shrink:0}
+.bad-t{color:var(--bad)}
+#setup select{width:100%}
 </style>
 </head>
 <body>
@@ -3144,6 +3175,13 @@ function pmOut(){
   return h;
 }
 function paintModal(){
+  const m=$('#modal'),old=!m.hidden&&m.querySelector('.sheet'),lab=old&&old.getAttribute('aria-label');
+  const ys=old?[...m.querySelectorAll('.sheet,.xscroll')].map(e=>e.scrollTop):[];
+  paintModal0();
+  const nw=!m.hidden&&m.querySelector('.sheet');
+  if(nw&&nw!==old&&lab&&nw.getAttribute('aria-label')===lab){nw.classList.add('still');[...m.querySelectorAll('.sheet,.xscroll')].forEach((e,i)=>{if(ys[i])e.scrollTop=ys[i];});}
+}
+function paintModal0(){
   const m=$('#modal');
   if(ui.pg&&!ui.xb){paintPg();return;}
   if(ui.ph){paintPh();return;}
@@ -3209,6 +3247,7 @@ document.addEventListener('click',e=>{
   if(a==='scan-close'){scanClose();return;}
   if(a.indexOf('pg-')===0&&pgAction(a,D))return;
   if(a==='sw-update'){if(ui.swWait){ui.swAsked=true;ui.swWait.postMessage('skip');}return;}
+  if(a==='su-calc'){suCalc();return;}
   if(a==='su-plan'){ui.suPlan=D.v;document.querySelectorAll('.su-plan').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.v===D.v)));return;}
   if(a==='au-out-ask'){doSignOut(false);return;}
   if(a==='install'){if(INSTALL){INSTALL.prompt();INSTALL.userChoice.finally(()=>{INSTALL=null;render();});}return;}
@@ -3696,6 +3735,8 @@ const PGOAL=[['All','Any goal'],['beginner','New to training'],['muscle','Build 
 const PFOCUS={arms:'Arms',biceps:'Biceps',chest:'Chest',shoulders:'Shoulders',back:'Back',legs:'Legs',glutes:'Glutes',abs:'Abs and core'};
 const PEQ={gym:'Gym',dumbbells:'Dumbbells',none:'No equipment'};
 const PLEVELS=['Starter','Intermediate','Advanced'];
+function fl(x){return Array.isArray(x)?x.filter(k=>PFOCUS[k]):(x&&PFOCUS[x]?[x]:[]);}
+function flTxt(a){return a.map(k=>PFOCUS[k].toLowerCase()).join(' and ');}
 function progs(){return (window.CL_PROGRAMS||[]).concat((S.plan.myProgs||[]));}
 function progById(id){return progs().find(p=>p.id===id)||null;}
 function progWeekOf(pr,date){
@@ -3734,10 +3775,11 @@ function swapName(n,adj){
 }
 function progRows(pr,adj){
   const days=pr.plan.map(d=>({name:d.name,ex:d.ex.map(e=>{const nn=swapName(e[0],adj);const r=e.slice();if(nn!==e[0]){r[0]=nn;r[5]='Gentler swap for '+e[0]+'.';}return r;})}));
-  if(adj&&adj.focus&&pr.focus!==adj.focus&&window.CL_FOCUS_ADD&&window.CL_FOCUS_ADD[adj.focus]){
-    const add=window.CL_FOCUS_ADD[adj.focus];
-    [0,Math.min(2,days.length-1)].filter((v,i,a)=>a.indexOf(v)===i).forEach(i=>{add.forEach(e=>{if(!days[i].ex.some(x=>x[0]===e[0]))days[i].ex.push(e.slice());});});
-  }
+  const F=adj?fl(adj.focus).filter(k=>k!==pr.focus&&window.CL_FOCUS_ADD&&window.CL_FOCUS_ADD[k]):[],n=days.length;
+  F.forEach((k,j)=>{
+    const idx=F.length===1?[0,Math.min(2,n-1)]:j===0?(n>=3?[0,2]:[0]):(n>=4?[1,3]:[n>=3?1:n-1]);
+    idx.filter((v,i,a)=>a.indexOf(v)===i).forEach(i=>{window.CL_FOCUS_ADD[k].forEach(e=>{if(!days[i].ex.some(x=>x[0]===e[0]))days[i].ex.push(e.slice());});});
+  });
   return days;
 }
 function progBuildDays(pr,adj){
@@ -3798,7 +3840,7 @@ function progPlanCard(){
   const P=S.plan.prog,pr=P&&progById(P.id);
   if(pr){
     const w=progWeekOf(pr),a=P.adj;
-    const adjTxt=a?[a.vol<0?'fewer sets for a newer lifter':'',a.avoid&&a.avoid.length?'gentler swaps for '+a.avoid.join(' and '):'',a.focus&&pr.focus!==a.focus?'extra '+(PFOCUS[a.focus]||a.focus).toLowerCase()+' work':''].filter(Boolean).join(', '):'';
+    const adjTxt=a?[a.vol<0?'fewer sets for a newer lifter':'',a.avoid&&a.avoid.length?'gentler swaps for '+a.avoid.join(' and '):'',fl(a.focus).filter(k=>k!==pr.focus).length?'extra '+flTxt(fl(a.focus).filter(k=>k!==pr.focus))+' work':''].filter(Boolean).join(', '):'';
     return '<div class="card pgc"><div class="eyebrow">'+(pr.custom?'Your programme':'Programme')+'</div><h2>'+esc(pr.name)+'</h2><p class="sub">'+(w>pr.weeks?'Finished':'Week '+w+' of '+pr.weeks)+' &middot; '+(pr.custom?'edit the days below and the programme saves itself.':'the days below come from this programme and update each week. Edit or swap anything.')+(adjTxt?' Adjusted for you: '+esc(adjTxt)+'.':'')+'</p>'
       +'<div class="row" style="margin-top:10px">'+(pr.custom?'':'<button class="btn ghost" data-a="pg-view" data-id="'+esc(pr.id)+'">View</button>')+'<button class="btn ghost" data-a="pg-open">Change</button><button class="btn bad" data-a="pg-end">'+(ui.arm==='pgend'?'Tap again to end':'End programme')+'</button></div></div>';
   }
@@ -3806,7 +3848,7 @@ function progPlanCard(){
 }
 
 /* ---------- personal fit ---------- */
-function quizDefaults(){const q=S.plan.profile||{};return {goal:q.goal||'muscle',exp:q.exp||'some',days:q.days||'4',mins:q.mins||'60',equip:q.equip||'gym',focus:q.focus||'',avoid:Array.isArray(q.avoid)?q.avoid.slice():[]};}
+function quizDefaults(){const q=S.plan.profile||{};return {goal:q.goal||'',exp:q.exp||'',days:q.days||'',mins:q.mins||'',equip:q.equip||'',focus:fl(q.focus),avoid:Array.isArray(q.avoid)?q.avoid.slice():[]};}
 function minsOf(p){const m=String(p.mins).match(/\d+/g)||[60];return +m[m.length-1];}
 function recommend(q){
   const lvl={new:'Starter',some:'Intermediate',years:'Advanced'}[q.exp];
@@ -3814,8 +3856,9 @@ function recommend(q){
   const eqOK=p=>q.equip==='gym'||(q.equip==='dumbbells'&&p.equip!=='gym')||(q.equip==='none'&&p.equip==='none');
   return (window.CL_PROGRAMS||[]).filter(eqOK).map(p=>{
     let s=0;const why=[];
-    if(q.focus&&p.focus===q.focus){s+=9;why.push('built around '+PFOCUS[q.focus].toLowerCase());}
-    else if(q.focus==='biceps'&&p.focus==='arms'){s+=6;why.push('lots of biceps work');}
+    const QF=fl(q.focus);
+    if(p.focus&&QF.indexOf(p.focus)>=0){s+=QF.length>1?7:9;why.push('built around '+PFOCUS[p.focus].toLowerCase());}
+    else if(QF.indexOf('biceps')>=0&&p.focus==='arms'){s+=6;why.push('lots of biceps work');}
     if(p.goal===q.goal){s+=6;why.push({muscle:'built for muscle',strength:'built for strength',fatloss:'built for fat loss',home:'made for home training',beginner:'made for new lifters'}[q.goal]);}
     else if(q.goal==='muscle'&&p.goal==='focus'){s+=3;}
     else if(q.goal==='beginner'&&p.level==='Starter'){s+=4;}
@@ -3834,33 +3877,41 @@ function recommend(q){
 }
 function recommendTop(q){
   const all=recommend(q),top=all.slice(0,3);
-  if(q.focus&&!top.some(r=>r.p.focus===q.focus||(q.focus==='biceps'&&r.p.focus==='arms'))){
-    const f=all.find(r=>r.p.focus===q.focus&&!(q.exp==='new'&&r.p.level==='Advanced'));
-    if(f)top[top.length-1]=f;
+  const QF=fl(q.focus);
+  if(QF.length&&!top.some(r=>QF.indexOf(r.p.focus)>=0||(QF.indexOf('biceps')>=0&&r.p.focus==='arms'))){
+    const f=all.find(r=>QF.indexOf(r.p.focus)>=0&&!(q.exp==='new'&&r.p.level==='Advanced'));
+    if(f&&!top.includes(f))top[top.length-1]=f;
   }
   return top;
 }
 function quizAdj(q){
-  const a={vol:q.exp==='new'?-1:0,avoid:q.avoid.slice(),focus:q.focus||''};
-  return (a.vol||a.avoid.length||a.focus)?a:null;
+  const a={vol:q.exp==='new'?-1:0,avoid:q.avoid.slice(),focus:fl(q.focus)};
+  return (a.vol||a.avoid.length||a.focus.length)?a:null;
 }
+const QSTEPS=[
+  {k:'goal',t:'What is your main goal?',o:[['muscle','Build muscle','Bigger, more defined muscles'],['strength','Get stronger','Lift heavier on the big lifts'],['fatloss','Lose fat','Drop fat and keep your muscle'],['beginner','Get started','Learn the basics safely'],['home','Train at home','Little or no equipment']]},
+  {k:'exp',t:'How long have you been training?',o:[['new','New, or back after a long break','Under 6 months of regular training'],['some','6 months to 2 years','You know the main exercises'],['years','2+ years, consistently','You train hard and track your lifts']]},
+  {k:'days',t:'How many days a week can you train?',grid:5,o:[['2','2'],['3','3'],['4','4'],['5','5'],['6','6']],note:'Pick what you can keep up on a busy week, not your best week.'},
+  {k:'mins',t:'How long is each session?',grid:2,o:[['30','30 min'],['45','45 min'],['60','60 min'],['90','75+ min']]},
+  {k:'equip',t:'What equipment do you have?',o:[['gym','Full gym','Machines, cables, barbells'],['dumbbells','Dumbbells','A set of dumbbells and a bench'],['none','Nothing','Bodyweight only']]},
+  {k:'focus',t:'Any body part you want extra work on?',multi:2,grid:2,o:Object.keys(PFOCUS).map(k=>[k,PFOCUS[k]]),note:'Optional. Pick up to 2, or skip.'},
+  {k:'avoid',t:'Anything to go easy on?',multi:3,o:[['knees','Knees'],['back','Lower back'],['shoulders','Shoulders']],note:'Optional. Swaps in gentler exercises. General guidance, not medical advice: see a physio for an injury.'}
+];
 function pgQuizHTML(){
-  const q=ui.pg.q,opt=(name,v,l)=>'<button type="button" class="qopt" data-a="pg-q" data-k="'+name+'" data-v="'+v+'" aria-pressed="'+(String(q[name])===String(v))+'">'+l+'</button>';
-  let h='<button class="link" data-a="pg-back" style="margin:-6px 0 4px -8px">&lsaquo; All programmes</button><h2 style="margin:0 0 4px">Find my programme</h2><p class="sub" style="margin-bottom:12px">Six quick questions. The app picks the best 3 for you and adjusts them when you start.</p>';
-  h+='<div class="q"><b>Main goal</b><div class="qrow">'+opt('goal','muscle','Build muscle')+opt('goal','strength','Get stronger')+opt('goal','fatloss','Lose fat')+opt('goal','beginner','Get started')+opt('goal','home','Train at home')+'</div></div>';
-  h+='<div class="q"><b>Training experience</b><div class="qrow">'+opt('exp','new','New or back after a long break')+opt('exp','some','6 months to 2 years')+opt('exp','years','2+ years, consistent')+'</div></div>';
-  h+='<div class="q"><b>Days a week</b><div class="qrow">'+['2','3','4','5','6'].map(d=>opt('days',d,d)).join('')+'</div></div>';
-  h+='<div class="q"><b>Time per session</b><div class="qrow">'+opt('mins','30','30 min')+opt('mins','45','45 min')+opt('mins','60','60 min')+opt('mins','90','75+ min')+'</div></div>';
-  h+='<div class="q"><b>Equipment</b><div class="qrow">'+opt('equip','gym','Full gym')+opt('equip','dumbbells','Dumbbells')+opt('equip','none','Nothing')+'</div></div>';
-  h+='<div class="q"><b>Extra focus (optional)</b><div class="qrow">'+opt('focus','','None')+Object.keys(PFOCUS).map(k=>opt('focus',k,PFOCUS[k])).join('')+'</div></div>';
-  h+='<div class="q"><b>Go easy on (optional)</b><div class="qrow">'+[['knees','Knees'],['back','Lower back'],['shoulders','Shoulders']].map(a=>'<button type="button" class="qopt" data-a="pg-qa" data-v="'+a[0]+'" aria-pressed="'+(q.avoid.indexOf(a[0])>=0)+'">'+a[1]+'</button>').join('')+'</div><p class="sub" style="margin-top:6px">Swaps in gentler exercises. General guidance, not medical advice: see a physio for an injury.</p></div>';
-  h+='<button class="btn full" data-a="pg-rec">Show my programmes</button>';
+  const q=ui.pg.q,n=ui.pg.step||0,st=QSTEPS[n],last=n===QSTEPS.length-1;
+  const val=q[st.k],on=v=>st.multi?(val||[]).indexOf(v)>=0:String(val)===v;
+  let h='<div class="qhead"><button class="link" data-a="'+(n?'pg-qprev':'pg-back')+'">&lsaquo; '+(n?'Back':'All programmes')+'</button><span>Step '+(n+1)+' of '+QSTEPS.length+'</span></div>';
+  h+='<div class="qbar" aria-hidden="true"><i style="width:'+Math.round((n+1)/QSTEPS.length*100)+'%"></i></div>';
+  h+='<h2 class="qt">'+st.t+'</h2>'+(st.note?'<p class="sub" style="margin:-4px 0 12px">'+st.note+'</p>':'');
+  h+='<div class="qlist'+(st.grid?' g'+st.grid:'')+'" role="'+(st.multi?'group':'radiogroup')+'" aria-label="'+esc(st.t)+'">'+st.o.map(o=>'<button type="button" class="qcard" data-a="pg-q" data-k="'+st.k+'" data-v="'+o[0]+'" '+(st.multi?'aria-pressed':'role="radio" aria-checked')+'="'+on(o[0])+'"><b>'+o[1]+'</b>'+(o[2]?'<span>'+o[2]+'</span>':'')+'<i aria-hidden="true"></i></button>').join('')+'</div>';
+  const ok=st.multi||String(val||'')!=='';
+  h+='<div class="qnext"><button class="btn full" data-a="'+(last?'pg-rec':'pg-qnext')+'"'+(ok?'':' disabled')+'>'+(last?'Show my programmes':st.multi&&!(val||[]).length?'Skip':'Next')+'</button></div>';
   return h;
 }
 function pgRecHTML(){
   const q=ui.pg.q,rs=recommendTop(q),adj=quizAdj(q);
   let h='<button class="link" data-a="pg-quiz" style="margin:-6px 0 4px -8px">&lsaquo; Change answers</button><h2 style="margin:0 0 4px">Best for you</h2>';
-  if(adj)h+='<p class="sub" style="margin-bottom:6px">When you start one, the app will '+[adj.vol<0?'use one set fewer per exercise while you build up':'',adj.avoid.length?'swap in gentler exercises for your '+adj.avoid.join(' and '):'',adj.focus?'add extra '+PFOCUS[adj.focus].toLowerCase()+' work (unless it is already a '+PFOCUS[adj.focus].toLowerCase()+' programme)':''].filter(Boolean).join(', ')+'.</p>';
+  if(adj)h+='<p class="sub" style="margin-bottom:6px">When you start one, the app will '+[adj.vol<0?'use one set fewer per exercise while you build up':'',adj.avoid.length?'swap in gentler exercises for your '+adj.avoid.join(' and '):'',fl(adj.focus).length?'add extra '+flTxt(fl(adj.focus))+' work (skipped if the programme already focuses on it)':''].filter(Boolean).join(', ')+'.</p>';
   if(!rs.length)return h+'<p class="sub">Nothing fits those answers. Try a different equipment or days choice.</p>';
   h+=rs.map((r,i)=>'<button class="pgrow'+(i===0?' top':'')+'" data-a="pg-view" data-id="'+r.p.id+'" data-fit="1"><span class="lt">'+(i===0?'<span class="chip good">Best match</span> ':'')+'<b>'+esc(r.p.name)+'</b><small>'+r.p.weeks+' weeks &middot; '+r.p.perWeek+' days &middot; '+PEQ[r.p.equip]+' &middot; '+r.p.level+'</small><span class="pgs">Why: '+esc(r.why.slice(0,4).join(', ')||'closest match')+'.</span></span><span class="chev" aria-hidden="true">&rsaquo;</span></button>').join('');
   h+='<button class="btn ghost full" data-a="pg-back" style="margin-top:12px">See all programmes</button>';
@@ -3908,7 +3959,7 @@ function pgDetailHTML(){
     h+='<div class="pgw'+(f.deload?' easy':'')+'"><b>'+w+'</b><span>'+(f.deload?'Easier week':wave?['Fives','Threes','5-3-1','Light'][waveWeek(pr,w)-1]:esc(f.ph.label)+' &middot; '+scheme(f.ph.main))+'</span></div>';
   }
   h+='</div><p class="sub" style="margin-top:6px">'+(wave?'Main lifts follow a monthly wave of percentages of your training max. Assistance work: '+scheme(pr.phases[0].acc)+'.':'Week, then sets × reps for the main lifts. Other exercises: '+pr.phases.map(p=>esc(p.label)+' '+scheme(p.acc)).join(', ')+'.')+'</p>';
-  if(adj)h+='<p class="au-msg good" style="margin-top:10px">Adjusted for you: '+[adj.vol<0?'one set fewer per exercise while you build up':'',adj.avoid.length?'gentler swaps for your '+adj.avoid.join(' and '):'',adj.focus&&pr.focus!==adj.focus?'extra '+PFOCUS[adj.focus].toLowerCase()+' work added':''].filter(Boolean).join(', ')+'. Shown below.</p>';
+  if(adj)h+='<p class="au-msg good" style="margin-top:10px">Adjusted for you: '+[adj.vol<0?'one set fewer per exercise while you build up':'',adj.avoid.length?'gentler swaps for your '+adj.avoid.join(' and '):'',fl(adj.focus).filter(k=>k!==pr.focus).length?'extra '+flTxt(fl(adj.focus).filter(k=>k!==pr.focus))+' work added':''].filter(Boolean).join(', ')+'. Shown below.</p>';
   h+='<div class="xh">The days (week 1)</div>';
   progRows(pr,adj).forEach((d,i)=>{
     h+='<div class="pgday"><div class="pgdh"><b>'+esc(d.name)+'</b><span>'+(pr.sched[i]!==undefined?WDL[pr.sched[i]]:'')+'</span></div>';
@@ -3945,19 +3996,27 @@ function pgNewSubmit(e){
 function paintPg(){
   const m=$('#modal'),G=ui.pg;
   const body={detail:pgDetailHTML,quiz:pgQuizHTML,rec:pgRecHTML,nw:pgNewHTML}[G.mode];
-  m.innerHTML='<div class="mback" data-a="pm-close"></div><div class="sheet lib xsheet" role="dialog" aria-modal="true" aria-label="Programmes"><div class="shh"><h2>Programmes</h2><button class="link" data-a="pm-close">Close</button></div><div class="xscroll" id="pg-scroll">'+(body?body():pgListHTML())+'</div></div>';
-  m.hidden=false;
+  const html=body?body():pgListHTML(),sc=$('#pg-scroll');
+  if(sc&&!m.hidden&&m.querySelector('.sheet.pgsheet')){const y=sc.scrollTop;sc.innerHTML=html;sc.scrollTop=y;}
+  else{m.innerHTML='<div class="mback" data-a="pm-close"></div><div class="sheet lib xsheet pgsheet" role="dialog" aria-modal="true" aria-label="Programmes"><div class="shh"><h2>Programmes</h2><button class="link" data-a="pm-close">Close</button></div><div class="xscroll" id="pg-scroll">'+html+'</div></div>';m.hidden=false;}
   const f=$('#pgnew');if(f)f.addEventListener('submit',pgNewSubmit);
 }
-function pgNewState(){return {mode:'list',goal:'All',lvl:'All',days:'All',eq:'All',id:null,arm:null,fit:false,q:quizDefaults(),nw:{name:'',weeks:8,days:3,src:'',from:'blank'}};}
+function pgNewState(){return {mode:'list',step:0,goal:'All',lvl:'All',days:'All',eq:'All',id:null,arm:null,fit:false,q:quizDefaults(),nw:{name:'',weeks:8,days:3,src:'',from:'blank'}};}
 function pgScrollTop(){const sc=$('#pg-scroll');if(sc)sc.scrollTop=0;}
 function pgAction(a,D){
   if(a==='pg-open'){ui.pg=pgNewState();paintModal();return true;}
   if(!ui.pg&&a!=='pg-end')ui.pg=pgNewState();
-  if(a==='pg-quiz'){ui.pg.mode='quiz';ui.pg.fit=false;paintModal();pgScrollTop();return true;}
-  if(a==='pg-q'){ui.pg.q[D.k]=D.v;paintModal();const sc=$('#pg-scroll');return true;}
-  if(a==='pg-qa'){const av=ui.pg.q.avoid,i=av.indexOf(D.v);if(i>=0)av.splice(i,1);else av.push(D.v);paintModal();return true;}
-  if(a==='pg-rec'){S.plan.profile=Object.assign({},ui.pg.q,{t:Date.now()});touchPlan();ui.pg.mode='rec';ui.pg.fit=false;paintModal();pgScrollTop();return true;}
+  if(a==='pg-quiz'){ui.pg.mode='quiz';ui.pg.step=0;ui.pg.fit=false;paintModal();pgScrollTop();return true;}
+  if(a==='pg-qnext'||a==='pg-qprev'){ui.pg.step=Math.max(0,Math.min(QSTEPS.length-1,(ui.pg.step||0)+(a==='pg-qnext'?1:-1)));paintModal();pgScrollTop();return true;}
+  if(a==='pg-q'){
+    const st=QSTEPS.find(x=>x.k===D.k),q=ui.pg.q;
+    if(st.multi){const L=q[D.k]=(q[D.k]||[]).slice(),i=L.indexOf(D.v);if(i>=0)L.splice(i,1);else{if(L.length>=st.multi){toast('Pick up to '+st.multi+'. Tap one to remove it first.');return true;}L.push(D.v);}paintModal();return true;}
+    q[D.k]=D.v;paintModal();
+    // single choice: move on after a short pause so the tick is seen
+    const at=ui.pg.step||0;ui.pg.step=at;setTimeout(()=>{if(ui.pg&&ui.pg.mode==='quiz'&&ui.pg.step===at&&at<QSTEPS.length-1){ui.pg.step=at+1;paintModal();pgScrollTop();}},260);
+    return true;
+  }
+  if(a==='pg-rec'){const q=ui.pg.q;if(!q.goal||!q.exp||!q.days||!q.mins||!q.equip){ui.pg.step=QSTEPS.findIndex(x=>!x.multi&&!q[x.k]);paintModal();return true;}S.plan.profile=Object.assign({},q,{t:Date.now()});if(+q.mins)S.plan.settings.dur=Math.min(+q.mins,90);touchPlan();ui.pg.mode='rec';ui.pg.fit=false;paintModal();pgScrollTop();return true;}
   if(a==='pg-view'){ui.pg.mode='detail';ui.pg.id=D.id;ui.pg.arm=null;ui.pg.fit=!!D.fit||(ui.pg.fit&&ui.pg.mode==='detail');paintModal();pgScrollTop();return true;}
   if(a==='pg-back'){ui.pg.mode='list';ui.pg.arm=null;ui.pg.fit=false;paintModal();pgScrollTop();return true;}
   if(a==='pg-clear'){ui.pg.goal='All';ui.pg.lvl='All';ui.pg.days='All';ui.pg.eq='All';paintModal();return true;}
@@ -4240,24 +4299,46 @@ async function changePassword(cur,nw){
 /* ---------- first-run setup ---------- */
 function viewSetup(){
   const st=S.plan.settings,T=S.plan.targets;
+  const sel=(id,opts,v)=>'<select id="'+id+'">'+opts.map(o=>'<option value="'+o[0]+'"'+(String(v)===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select>';
   let h='<header class="top"><div><div class="eyebrow">Welcome</div><h1>Set up your app</h1></div></header>';
-  h+='<div class="card"><p>A few details so the targets and charts fit you. You can change everything later in Settings.</p></div>';
+  h+='<div class="card"><p>A few details so your targets and charts fit you. Everything is optional, and you can change it later in Settings.</p></div>';
   h+='<form id="setup" class="card" novalidate><h2>About you</h2><div class="mform">'
-    +'<label for="su-name" style="grid-column:1/-1">First name (optional)<input id="su-name" autocomplete="given-name" value="'+esc(st.name||'')+'"></label>'
-    +'<label for="su-w">Weight now (kg, optional)<input id="su-w" type="number" inputmode="decimal" step="any" min="20" max="400"></label>'
-    +'<label for="su-h">Height (cm, optional)<input id="su-h" type="number" inputmode="decimal" step="any" min="100" max="250" value="'+esc(st.height||'')+'"></label>'
-    +'</div><h2 style="margin-top:18px">Daily targets</h2>'
-    +'<p class="sub" style="margin-bottom:10px">Not sure? Keep these starting points and adjust after two weeks using the weekly check-in on the Progress tab. For protein, people who lift often aim for about 1.6 g per kg of body weight.</p><div class="mform">'
+    +'<label for="su-name" style="grid-column:1/-1">First name<input id="su-name" autocomplete="given-name" value="'+esc(st.name||'')+'"></label>'
+    +'<label for="su-w">Weight (kg)<input id="su-w" type="number" inputmode="decimal" step="any" min="20" max="400"></label>'
+    +'<label for="su-h">Height (cm)<input id="su-h" type="number" inputmode="decimal" step="any" min="100" max="250" value="'+esc(st.height||'')+'"></label>'
+    +'<label for="su-age">Age<input id="su-age" type="number" inputmode="numeric" min="18" max="99" value="'+esc(st.age||'')+'"></label>'
+    +'<label for="su-sex">Sex (for calories)'+sel('su-sex',[['','Prefer not to say'],['m','Male'],['f','Female']],st.sex||'')+'</label>'
+    +'</div><h2 style="margin-top:18px">Your routine</h2><div class="mform">'
+    +'<label for="su-time">Usual gym time<input id="su-time" type="time" value="'+esc(st.time||'17:00')+'"></label>'
+    +'<label for="su-act">Day job'+sel('su-act',[['1.25','Mostly sitting'],['1.4','On my feet a lot'],['1.55','Physical work']],st.act||'1.25')+'</label>'
+    +'<label for="su-steps">Steps a day<input id="su-steps" type="number" inputmode="numeric" value="'+esc(T.steps||8000)+'"></label>'
+    +'<label for="su-water">Water (litres a day)<input id="su-water" type="number" inputmode="decimal" step="0.5" value="'+esc(T.water||2.5)+'"></label>'
+    +'</div><h2 style="margin-top:18px">Calories and protein</h2>'
+    +'<p class="sub" style="margin-bottom:10px">Type your own, or fill in your weight, height and age above and let the app work out a starting point.</p>'
+    +'<div class="mform"><label for="su-aim" style="grid-column:1/-1">Aim'+sel('su-aim',[['lose','Lose fat'],['keep','Stay the same weight'],['gain','Build muscle (small surplus)']],st.aim||'keep')+'</label></div>'
+    +'<button type="button" class="btn ghost full" data-a="su-calc" style="margin:10px 0 4px">Work it out for me</button><p class="sub" id="su-calc-out" role="status" style="min-height:1em;margin-bottom:8px"></p><div class="mform">'
     +'<label for="su-kt">Calories, training days<input id="su-kt" type="number" inputmode="numeric" value="'+esc(T.kcalTrain)+'"></label>'
     +'<label for="su-kr">Calories, rest days<input id="su-kr" type="number" inputmode="numeric" value="'+esc(T.kcalRest)+'"></label>'
     +'<label for="su-p" style="grid-column:1/-1">Protein (g a day)<input id="su-p" type="number" inputmode="numeric" value="'+esc(T.protein)+'"></label>'
     +'</div><h2 style="margin-top:18px">Training plan</h2><div class="su-plans" role="radiogroup" aria-label="Starting plan">'
     +(ui.owner?'<button type="button" class="su-plan" data-a="su-plan" data-v="t" role="radio" aria-checked="'+((ui.suPlan||'t')==='t')+'"><b>My 5-day split</b><span>Chest and arms, legs, back, shoulders, hamstrings.</span></button>':'')
-    +'<button type="button" class="su-plan" data-a="su-plan" data-v="q" role="radio" aria-checked="'+((ui.suPlan||(ui.owner?'t':'q'))==='q')+'"><b>Help me choose (recommended)</b><span>Answer 6 quick questions about your goal, experience, days and kit. You get a matching programme to start.</span></button>'
+    +'<button type="button" class="su-plan" data-a="su-plan" data-v="q" role="radio" aria-checked="'+((ui.suPlan||(ui.owner?'t':'q'))==='q')+'"><b>Help me choose (recommended)</b><span>A few quick questions about your goal, experience, days and kit. You get matching programmes to pick from.</span></button>'
     +'<button type="button" class="su-plan" data-a="su-plan" data-v="l" role="radio" aria-checked="'+(ui.suPlan==='l')+'"><b>Browse programmes</b><span>Pick from 31 ready-made programmes, starter to advanced.</span></button>'
     +'<button type="button" class="su-plan" data-a="su-plan" data-v="e" role="radio" aria-checked="'+(ui.suPlan==='e')+'"><b>Start empty</b><span>Build your own days from the exercise bank.</span></button>'
-    +'</div><button class="btn full" type="submit" style="margin-top:18px">Start using the app</button></form>';
+    +'</div><button class="btn full" type="submit" style="margin-top:18px">Start using the app</button></form>'
+    +'<p class="sub" style="text-align:center;margin:4px 0 16px">Signed in as '+esc(USER?USER.email:'')+'. <button class="link" data-a="au-out-ask" style="display:inline;padding:0 4px;min-height:0">Sign out</button></p>';
   return h;
+}
+function suCalc(){
+  const n=id=>{const x=parseFloat(($('#'+id)||{}).value);return isFinite(x)?x:null;},out=$('#su-calc-out');
+  const w=n('su-w'),h=n('su-h'),age=n('su-age'),sex=($('#su-sex')||{}).value,act=n('su-act')||1.25,aim=($('#su-aim')||{}).value||'keep';
+  if(!(w>=30&&w<=300)||!(h>=120&&h<=230)||!(age>=18&&age<=99)){out.textContent='Fill in weight, height and age above first.';out.className='sub bad-t';return;}
+  // Mifflin-St Jeor, the standard everyday estimate of calories burned at rest
+  const bmr=10*w+6.25*h-5*age+(sex==='m'?5:sex==='f'?-161:-78);
+  const adj={lose:-400,keep:0,gain:250}[aim],r50=x=>Math.round(x/50)*50,floor=sex==='m'?1500:1200;
+  const rest=Math.max(floor,r50(bmr*act+adj)),train=Math.max(floor,r50(bmr*act+250+adj)),pro=Math.round(w*(aim==='lose'?2:1.8));
+  $('#su-kt').value=train;$('#su-kr').value=rest;const p=$('#su-p');p.value=pro;p.dataset.touched='1';
+  out.textContent='About '+train+' kcal on training days and '+rest+' on rest days, with '+pro+' g protein. It is an estimate: the weekly check-in on the Progress tab fine-tunes it after two weeks.';out.className='sub';
 }
 function setupSubmit(e){
   e.preventDefault();
@@ -4266,6 +4347,12 @@ function setupSubmit(e){
   st.name=(($('#su-name')||{}).value||'').trim().slice(0,40);
   const w=v('su-w'),hh=v('su-h');
   if(hh&&hh>=100&&hh<=250)st.height=hh;
+  const age=v('su-age');if(age&&age>=18&&age<=99)st.age=Math.round(age);
+  const g=id=>(($('#'+id)||{}).value||'');
+  st.sex=g('su-sex');st.act=g('su-act')||'1.25';st.aim=g('su-aim')||'keep';
+  if(/^\d\d:\d\d$/.test(g('su-time')))st.time=g('su-time');
+  const stp=v('su-steps');if(stp&&stp>=0&&stp<=60000)T.steps=Math.round(stp);
+  const wat=v('su-water');if(wat&&wat>0&&wat<=10)T.water=wat;
   T.kcalTrain=Math.round(v('su-kt')||T.kcalTrain);T.kcalRest=Math.round(v('su-kr')||T.kcalRest);
   T.protein=Math.round(v('su-p')||(w?w*1.6:T.protein));
   const how=ui.suPlan||(ui.owner?'t':'q');
