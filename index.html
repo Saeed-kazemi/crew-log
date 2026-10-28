@@ -196,6 +196,13 @@ body.authed-out .app{padding-bottom:40px}
 .acctbar .btn{flex-shrink:0}
 .bad-t{color:var(--bad)}
 #setup select{width:100%}
+.impc{border:1.5px solid var(--accent)}
+.impl{margin:8px 0 0;padding-left:18px;display:grid;gap:4px}
+.filebtn{position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.filebtn input{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer}
+.pgmini{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-block:10px}
+.pgmini span{font-size:.9rem;color:var(--sub)}
+.pgmini .pgml{display:flex;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -2891,7 +2898,7 @@ function viewMore(){
   h+=secCard('cal','Calendar','Add your sessions to Google Calendar',cal);
   const th=ui.theme||'auto';
   h+=secCard('app','Appearance','Theme and the RPE column','<label for="theme">Theme<select id="theme" data-c="theme"><option value="auto"'+(th==='auto'?' selected':'')+'>Match my phone</option><option value="light"'+(th==='light'?' selected':'')+'>Light</option><option value="dark"'+(th==='dark'?' selected':'')+'>Dark</option><option value="black"'+(th==='black'?' selected':'')+'>True black, neon green</option></select></label><label for="rpe">RPE column on sets (how hard it felt, 1 to 10)<select id="rpe" data-c="rpe"><option value="off"'+(!st.rpe?' selected':'')+'>Off</option><option value="on"'+(st.rpe?' selected':'')+'>On</option></select></label>');
-  let d='<div class="row"><button class="btn ghost" data-a="export-json">Backup (JSON)</button><button class="btn ghost" data-a="export-csv-m">Measurements (CSV)</button><button class="btn ghost" data-a="export-csv-s">Lifts (CSV)</button></div><label for="impf">Restore from a backup<input id="impf" type="file" accept=".json,application/json" data-c="import"></label>';
+  let d='<div class="row"><button class="btn ghost" data-a="export-json">Backup (JSON)</button><button class="btn ghost" data-a="export-csv-m">Measurements (CSV)</button><button class="btn ghost" data-a="export-csv-s">Lifts (CSV)</button></div><label for="impf">Restore from a backup<input id="impf" type="file" accept=".json,application/json" data-c="import"></label>'+impCard();
   d+='<p class="sub">Every set you log is saved on this device straight away and in your account a moment later. Each week the app also keeps a snapshot of your plan and measurements in your account, the last 8 weeks. Restoring one puts back that week\'s plan and measurements. Logged workouts are not touched.</p>';
   const keys=Object.keys(BK).sort().reverse();
   if(!keys.length)d+='<p class="sub">No snapshots yet. The first one is made the next time the app opens online.</p>';
@@ -2900,7 +2907,7 @@ function viewMore(){
   h+=secCard('data','Backup and restore','Export, import and weekly snapshots',d);
   h+=secCard('rs','Reset plan','Put the training days back to the 5-day starter plan','<p class="sub">Your logs, food, measurements, targets and settings stay.</p><button class="btn bad" data-a="reset-plan">'+(ui.arm==='reset'?'Tap again to reset the plan':'Reset to the starter plan')+'</button>');
   h+=secCard('acct','Password and account','Change your password or delete your account','<form id="pwform" class="mform" novalidate><label for="pw-cur" style="grid-column:1/-1">Current password<input id="pw-cur" type="password" autocomplete="current-password"></label><label for="pw-new" style="grid-column:1/-1">New password (10 to 45 characters, with a capital, a small letter, a number and a symbol)<input id="pw-new" type="password" autocomplete="new-password" minlength="10"></label><button class="btn ghost" type="submit" style="grid-column:1/-1">Change password</button></form>'
-   +'<div class="dz"><b>Delete account</b><p class="sub">Removes your account and everything in it: plan, logs, food, measurements and photos. This cannot be undone. Export a backup first if you want a copy.</p><form id="delform" novalidate><label for="del-pw">Type your password to confirm<input id="del-pw" type="password" autocomplete="current-password"></label><button class="btn bad full" type="submit" style="margin-top:8px">'+(ui.arm==='delacct'?'Tap again to delete everything':'Delete my account')+'</button></form></div>');
+   +'<div class="dz"><b>Delete account</b><p class="sub">Removes your account and everything in it: plan, logs, food, measurements and photos. This cannot be undone. Download a backup first if you might want your plan and logs back later.</p><button type="button" class="btn ghost full" data-a="export-json" style="margin-bottom:10px">Download a backup first</button><form id="delform" novalidate><label for="del-pw">Type your password to confirm<input id="del-pw" type="password" autocomplete="current-password"></label><button class="btn bad full" type="submit" style="margin-top:8px">'+(ui.arm==='delacct'?'Tap again to delete everything':'Delete my account')+'</button></form></div>');
   return h;
 }
 
@@ -2932,19 +2939,47 @@ function csvSets(){
   });
   return rows.map(r=>r.map(csvc).join(',')).join('\n');
 }
+// Restoring: read the file, show what is in it, and only replace data once the person confirms
+function bkSum(j){
+  const P=j.plan&&typeof j.plan==='object'?j.plan:null,D=j.days&&typeof j.days==='object'?j.days:{};
+  const days=P&&Array.isArray(P.days)?P.days:[],pr=P&&P.prog&&P.prog.id?((window.CL_PROGRAMS||[]).concat(P.myProgs||[]).find(x=>x.id===P.prog.id)||{name:'a programme'}):null;
+  const sess=Object.keys(D).filter(k=>{const d=D[k];return d&&d.sets&&Object.keys(d.sets).some(x=>Array.isArray(d.sets[x])&&d.sets[x].some(s=>s&&s.d));}).length;
+  const food=Object.keys(D).filter(k=>D[k]&&Array.isArray(D[k].food)&&D[k].food.length).length;
+  const meas=j.meas&&Array.isArray(j.meas.entries)?j.meas.entries.length:0;
+  const dates=Object.keys(D).sort();
+  return {days:days.length,names:days.map(d=>d&&d.name).filter(Boolean),prog:pr?pr.name:'',sess:sess,food:food,meas:meas,from:dates[0]||'',to:dates[dates.length-1]||'',hasPlan:!!P};
+}
 function doImport(file){
   const r=new FileReader();
   r.onload=()=>{
-    try{
-      const j=JSON.parse(r.result);
-      if(!j||typeof j!=='object')throw 0;
-      if(j.plan){S.plan=normPlan(j.plan);S.plan.ed=true;touch('plan');}
-      if(j.meas){S.meas=normMeas(j.meas);touch('meas');}
-      if(j.days){Object.keys(j.days).forEach(k=>{const l=S.days[k];if(!l||(l.t||0)<=(j.days[k].t||0)){S.days[k]=clone(j.days[k]);touch('d_'+k);}});}
-      render();toast('Backup restored');
-    }catch(e){toast('That file is not a backup from this app');}
+    let j=null;try{j=JSON.parse(r.result);}catch(e){}
+    if(!j||typeof j!=='object'||!(j.plan||j.meas||j.days)){ui.imp=null;toast('That file is not a Crew Log backup. Look for a file named crewlog-backup-(date).json',null,5000);render();return;}
+    ui.imp={j:j,sum:bkSum(j),name:file.name||'backup'};render();
+    const c=document.getElementById('impcard');if(c)c.scrollIntoView({block:'center',behavior:'smooth'});
   };
   r.readAsText(file);
+}
+function impCard(){
+  const I=ui.imp;if(!I)return '';const s=I.sum;
+  const lines=[];
+  lines.push(s.days?'<b>'+s.days+' training day'+(s.days>1?'s':'')+'</b>: '+esc(s.names.join(', ')):'<b class="bad-t">No training days</b> in this file');
+  if(s.prog)lines.push('Programme: <b>'+esc(s.prog)+'</b>');
+  lines.push('<b>'+s.sess+'</b> logged session'+(s.sess===1?'':'s')+(s.from?' ('+fmtD(s.from)+' to '+fmtD(s.to)+')':''));
+  lines.push('<b>'+s.food+'</b> day'+(s.food===1?'':'s')+' of food &middot; <b>'+s.meas+'</b> measurement'+(s.meas===1?'':'s'));
+  return '<div class="card impc" id="impcard"><span class="eyebrow">Backup file: '+esc(I.name)+'</span><h2 style="margin-top:2px">Restore this backup?</h2><ul class="impl">'+lines.map(l=>'<li>'+l+'</li>').join('')+'</ul>'
+    +'<p class="sub" style="margin:8px 0 12px">'+(s.hasPlan?'Your plan, targets and settings are replaced with the ones in this file. ':'')+'Logged days are added back. Progress photos are not part of backup files.</p>'
+    +'<div class="row" style="gap:8px"><button class="btn" style="flex:1" data-a="imp-go">Restore</button><button class="btn ghost" style="flex:1" data-a="imp-no">Cancel</button></div></div>';
+}
+function applyImport(){
+  const I=ui.imp;if(!I)return;const j=I.j,s=I.sum;ui.imp=null;
+  if(j.plan){S.plan=normPlan(j.plan);S.plan.onb=true;S.plan.ed=true;if(!S.plan.since)delete S.plan.since;touch('plan');}
+  else if(!S.plan.onb){S.plan.onb=true;touch('plan');}
+  if(j.meas){S.meas=normMeas(j.meas);touch('meas');}
+  if(j.days){Object.keys(j.days).forEach(k=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(k)||!j.days[k]||typeof j.days[k]!=='object')return;const l=S.days[k];if(!l||(l.t||0)<=(j.days[k].t||0)){S.days[k]=clone(j.days[k]);touch('d_'+k);}});}
+  const wasSetup=ui.setup;ui.setup=false;ui.pg=null;
+  if(S.plan.prog)progApply(true);
+  ui.tab='plan';saveNav();render();window.scrollTo(0,0);
+  toast('Restored: '+(s.prog?s.prog:s.days+' training days')+', '+s.sess+' sessions, '+s.meas+' measurements.',null,5000);
 }
 
 
@@ -3248,6 +3283,8 @@ document.addEventListener('click',e=>{
   if(a.indexOf('pg-')===0&&pgAction(a,D))return;
   if(a==='sw-update'){if(ui.swWait){ui.swAsked=true;ui.swWait.postMessage('skip');}return;}
   if(a==='su-calc'){suCalc();return;}
+  if(a==='imp-go'){applyImport();return;}
+  if(a==='imp-no'){ui.imp=null;const f=document.getElementById('impf')||document.getElementById('su-impf');if(f)f.value='';render();return;}
   if(a==='su-plan'){ui.suPlan=D.v;document.querySelectorAll('.su-plan').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.v===D.v)));return;}
   if(a==='au-out-ask'){doSignOut(false);return;}
   if(a==='install'){if(INSTALL){INSTALL.prompt();INSTALL.userChoice.finally(()=>{INSTALL=null;render();});}return;}
@@ -3844,6 +3881,7 @@ function progPlanCard(){
     return '<div class="card pgc"><div class="eyebrow">'+(pr.custom?'Your programme':'Programme')+'</div><h2>'+esc(pr.name)+'</h2><p class="sub">'+(w>pr.weeks?'Finished':'Week '+w+' of '+pr.weeks)+' &middot; '+(pr.custom?'edit the days below and the programme saves itself.':'the days below come from this programme and update each week. Edit or swap anything.')+(adjTxt?' Adjusted for you: '+esc(adjTxt)+'.':'')+'</p>'
       +'<div class="row" style="margin-top:10px">'+(pr.custom?'':'<button class="btn ghost" data-a="pg-view" data-id="'+esc(pr.id)+'">View</button>')+'<button class="btn ghost" data-a="pg-open">Change</button><button class="btn bad" data-a="pg-end">'+(ui.arm==='pgend'?'Tap again to end':'End programme')+'</button></div></div>';
   }
+  if(S.plan.days.length)return '<div class="card pgc pgmini"><span>Want a ready-made programme instead?</span><span class="pgml"><button class="link" data-a="pg-quiz">Find one</button><button class="link" data-a="pg-open">Browse</button></span></div>';
   return '<div class="card pgc"><div class="eyebrow">Programmes</div><h2>Not sure what to do?</h2><p class="sub">'+(window.CL_PROGRAMS||[]).length+' proven programmes from your first month to advanced, plus focus blocks for arms, chest, shoulders, back, legs, glutes and abs. Answer a few questions and the app picks the best ones for you.</p><div class="row" style="margin-top:10px"><button class="btn" data-a="pg-quiz">Find my programme</button><button class="btn ghost" data-a="pg-open">Browse all</button></div><button class="link" data-a="pg-new" style="margin-top:6px">+ Add your own programme</button></div>';
 }
 
@@ -4094,7 +4132,10 @@ async function initSync(){
   DB={doc:id=>{
     const r=F.doc(col,id);
     return {
-      set:d=>{trackWrite(F.setDoc(r,JSON.parse(JSON.stringify(d))));setSync(navigator.onLine?'saving':'error');return Promise.resolve();},
+      set:d=>{
+        try{trackWrite(F.setDoc(r,JSON.parse(JSON.stringify(d))));}
+        catch(e){setSync('error');toast('Part of your data ('+id+') could not be saved to your account. It is still on this device. Send a screenshot of this to the app owner.',null,8000);console.error('save failed',id,e);return Promise.resolve();}
+        setSync(navigator.onLine?'saving':'error');return Promise.resolve();},
       delete:()=>{trackWrite(F.deleteDoc(r));return Promise.resolve();}
     };
   }};
@@ -4302,6 +4343,7 @@ function viewSetup(){
   const sel=(id,opts,v)=>'<select id="'+id+'">'+opts.map(o=>'<option value="'+o[0]+'"'+(String(v)===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select>';
   let h='<header class="top"><div><div class="eyebrow">Welcome</div><h1>Set up your app</h1></div></header>';
   h+='<div class="card"><p>A few details so your targets and charts fit you. Everything is optional, and you can change it later in Settings.</p></div>';
+  h+=ui.imp?impCard():'<div class="card"><b>Used Crew Log before?</b><p class="sub" style="margin:4px 0 10px">Restore your backup file and skip this setup. Your plan, logs and measurements come back.</p><label class="btn ghost full filebtn" for="su-impf">Choose backup file<input id="su-impf" type="file" accept=".json,application/json" data-c="import"></label></div>';
   h+='<form id="setup" class="card" novalidate><h2>About you</h2><div class="mform">'
     +'<label for="su-name" style="grid-column:1/-1">First name<input id="su-name" autocomplete="given-name" value="'+esc(st.name||'')+'"></label>'
     +'<label for="su-w">Weight (kg)<input id="su-w" type="number" inputmode="decimal" step="any" min="20" max="400"></label>'
