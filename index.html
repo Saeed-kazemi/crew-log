@@ -1370,8 +1370,9 @@ function viewToday(){
   const dd=S.days[date]||null;
   const dayId=activeDayId(date);
   const day=P.days.find(d=>d.id===dayId)||null;
-  let h=top(isToday?'Today':'Logging',day?day.name:'Rest day');
+  let h=top(isToday?'Today':'Logging',day?day.name:(P.days.length||P.prog?'Rest day':'Welcome'));
   h+=progBanner();
+  if(!P.days.length&&!P.prog)return h+'<div class="card"><span class="eyebrow">No plan yet</span><h2 style="margin-top:2px">Let\'s find your programme</h2><p class="sub" style="margin:6px 0 14px">Answer a few questions about your goal, experience, training days and equipment, and the app suggests the best fit. You can also browse all programmes or build your own.</p><button class="btn full" data-a="pg-quiz">Find my programme</button><div class="row" style="gap:8px;margin-top:8px"><button class="btn ghost" style="flex:1" data-a="pg-open">Browse programmes</button><button class="btn ghost" style="flex:1" data-a="goto" data-t="plan">Build my own</button></div></div>';
   h+='<div class="datebar"><button class="btn ghost sm" data-a="date" data-n="-1" aria-label="Previous day">&#8249;</button><div class="dt">'+fmtLong(date)+(isToday?'':'<button class="back" data-a="date" data-n="0">Back to today</button>')+'</div><button class="btn ghost sm" data-a="date" data-n="1" aria-label="Next day">&#8250;</button></div>';
   if(isToday&&parseD(date).getDay()===0){
     const last=lastEntryDate();
@@ -4170,8 +4171,16 @@ async function auAction(a,D){
 
 /* ---------- app start, sign out, delete ---------- */
 function freshState(){S.plan=defaultPlan();S.meas=normMeas();S.days={};}
+// The app owner's account keeps his own 5-day split as a starting option. Stored as a hash so the address is not in the public code.
+const OWNER_H='8a9e77d633d8c38f86c28dac22194cf7368ae578b335632943ad8c22bab8240f';
+async function checkOwner(user){
+  let own=false;
+  try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(String(user.email||'').trim().toLowerCase()));own=[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')===OWNER_H;}catch(e){}
+  if(EMU&&!/[?&]new=1/.test(location.search))own=true;
+  if(own!==!!ui.owner){ui.owner=own;if(ui.setup)render();}
+}
 function startApp(user){
-  USER=user;UID=user.uid;READY=false;
+  USER=user;UID=user.uid;READY=false;ui.suPlan=null;checkOwner(user);
   try{localStorage.setItem('cl_signed','1');}catch(e){}
   document.body.classList.remove('authed-out');
   const nav=document.querySelector('.nav');if(nav)nav.hidden=false;
@@ -4243,7 +4252,9 @@ function viewSetup(){
     +'<label for="su-kr">Calories, rest days<input id="su-kr" type="number" inputmode="numeric" value="'+esc(T.kcalRest)+'"></label>'
     +'<label for="su-p" style="grid-column:1/-1">Protein (g a day)<input id="su-p" type="number" inputmode="numeric" value="'+esc(T.protein)+'"></label>'
     +'</div><h2 style="margin-top:18px">Training plan</h2><div class="su-plans" role="radiogroup" aria-label="Starting plan">'
-    +'<button type="button" class="su-plan" data-a="su-plan" data-v="t" role="radio" aria-checked="'+(ui.suPlan!=='e')+'"><b>5-day split</b><span>Chest and arms, legs, back, shoulders, hamstrings. Edit or delete anything.</span></button>'
+    +(ui.owner?'<button type="button" class="su-plan" data-a="su-plan" data-v="t" role="radio" aria-checked="'+((ui.suPlan||'t')==='t')+'"><b>My 5-day split</b><span>Chest and arms, legs, back, shoulders, hamstrings.</span></button>':'')
+    +'<button type="button" class="su-plan" data-a="su-plan" data-v="q" role="radio" aria-checked="'+((ui.suPlan||(ui.owner?'t':'q'))==='q')+'"><b>Help me choose (recommended)</b><span>Answer 6 quick questions about your goal, experience, days and kit. You get a matching programme to start.</span></button>'
+    +'<button type="button" class="su-plan" data-a="su-plan" data-v="l" role="radio" aria-checked="'+(ui.suPlan==='l')+'"><b>Browse programmes</b><span>Pick from 31 ready-made programmes, starter to advanced.</span></button>'
     +'<button type="button" class="su-plan" data-a="su-plan" data-v="e" role="radio" aria-checked="'+(ui.suPlan==='e')+'"><b>Start empty</b><span>Build your own days from the exercise bank.</span></button>'
     +'</div><button class="btn full" type="submit" style="margin-top:18px">Start using the app</button></form>';
   return h;
@@ -4257,11 +4268,14 @@ function setupSubmit(e){
   if(hh&&hh>=100&&hh<=250)st.height=hh;
   T.kcalTrain=Math.round(v('su-kt')||T.kcalTrain);T.kcalRest=Math.round(v('su-kr')||T.kcalRest);
   T.protein=Math.round(v('su-p')||(w?w*1.6:T.protein));
-  if(ui.suPlan==='e')P.days=[];
+  const how=ui.suPlan||(ui.owner?'t':'q');
+  if(how!=='t')P.days=[];
   if(w&&w>=20&&w<=400){S.meas.baseline.weight=w;S.meas.entries.push({id:uid8(),date:dstr(new Date()),v:{weight:w},note:''});touch('meas');}
   P.onb=true;P.ed=true;if(!P.since)P.since=dstr(new Date());touchPlan();
-  ui.setup=false;ui.tab='today';render();window.scrollTo(0,0);
-  toast('All set. Your plan is on the Plan tab.',null,3500);
+  ui.setup=false;ui.tab=how==='e'?'plan':'today';saveNav();render();window.scrollTo(0,0);
+  if(how==='t'){toast('All set. Your plan is on the Plan tab.',null,3500);return;}
+  if(how==='e'){toast('All set. Add your training days on the Plan tab.',null,3500);return;}
+  ui.pg=pgNewState();if(how==='q'){ui.pg.mode='quiz';ui.pg.fit=false;}paintModal();
 }
 document.addEventListener('input',e=>{if(e.target&&e.target.id==='su-w'){const w=parseFloat(e.target.value),p=$('#su-p');if(p&&isFinite(w)&&w>=20&&!p.dataset.touched)p.value=Math.round(w*1.6);}if(e.target&&e.target.id==='su-p')e.target.dataset.touched='1';});
 
